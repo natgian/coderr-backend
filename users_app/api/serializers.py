@@ -15,12 +15,22 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ["username", "email", "password", "repeated_password", "type"]
         extra_kwargs = {
             "password": {"write_only": True},
+            "username": {"validators": []},
+            "email": {"validators": []},
         }
 
     def validate(self, data):
-        """Check that the two password fields match."""
+        """Check that the two password fields match and check for existing users."""
         if data["password"] != data["repeated_password"]:
             raise serializers.ValidationError("Passwords do not match.")
+
+        if (
+            User.objects.filter(email=data["email"]).exists()
+            or User.objects.filter(username=data["username"]).exists()
+        ):
+            raise serializers.ValidationError(
+                {"non_field_errors": ["Username oder email address already taken"]}
+            )
         return data
 
     def create(self, validated_data):
