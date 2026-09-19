@@ -3,8 +3,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .serializers import RegistrationSerializer
+from .serializers import LoginSerializer, RegistrationSerializer
 
 
 class RegistrationView(CreateAPIView):
@@ -28,3 +29,26 @@ class RegistrationView(CreateAPIView):
         }
 
         return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class LoginView(APIView):
+    """Handle user login."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        """Handle user login and return an authentication token."""
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+        token, created = Token.objects.get_or_create(user=user)
+
+        response_data = {
+            "token": token.key,
+            "username": user.username,
+            "email": user.email,
+            "user_id": user.id,
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)

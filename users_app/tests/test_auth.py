@@ -21,7 +21,7 @@ class AuthTests(APITestCase):
         )
 
     def test_user_registration_201_success(self):
-        """Ensure a user can register successfully with valid data and receives a token."""
+        """Ensure a user can register successfully and receives a token."""
         url = reverse("registration")
         data = {
             "username": "exampleUser",
@@ -33,9 +33,6 @@ class AuthTests(APITestCase):
 
         response = self.client.post(url, data, format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(User.objects.filter(username=data["username"]).exists())
-
         created_user = User.objects.get(username="exampleUser")
         token = Token.objects.get(user=created_user)
         expected_data = {
@@ -45,6 +42,8 @@ class AuthTests(APITestCase):
             "user_id": created_user.id,
         }
 
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(User.objects.filter(username=data["username"]).exists())
         self.assertEqual(created_user.type, "customer")
         self.assertEqual(response.data, expected_data)
 
@@ -62,7 +61,6 @@ class AuthTests(APITestCase):
         response = self.client.post(url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        print("Response Data:", response.data)
 
     def test_user_registration_400_fail_passwords_missing_fields(self):
         """Ensure registration fails with a 400 error if fields are missing."""
@@ -91,3 +89,21 @@ class AuthTests(APITestCase):
         response = self.client.post(url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_user_login_200_success(self):
+        """Ensure a user can log in successfully and receives a token."""
+        url = reverse("login")
+        data = {"username": "SetupUser", "password": "setupPassword"}
+
+        response = self.client.post(url, data, format="json")
+
+        token = Token.objects.get(user=self.setup_user)
+        expected_data = {
+            "token": token.key,
+            "username": self.setup_user.username,
+            "email": self.setup_user.email,
+            "user_id": self.setup_user.id,
+        }
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_data)

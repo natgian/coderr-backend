@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from ..models import CustomUser
+from django.contrib.auth import authenticate, get_user_model
 
 User = get_user_model()
 
@@ -38,3 +37,30 @@ class RegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop("repeated_password")
         user = User.objects.create_user(**validated_data)
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    """Serializer for user authentictation."""
+
+    username = serializers.CharField()
+    password = serializers.CharField(style={"input_type": "password"})
+
+    def validate(self, data):
+        """Validate the username and password and authenticate the user."""
+        username = data.get("username")
+        password = data.get("password")
+
+        if username and password:
+            user = authenticate(
+                request=self.context.get("request"),
+                username=username,
+                password=password,
+            )
+            if not user:
+                raise serializers.ValidationError("Invalid username or password.")
+
+            data["user"] = user
+        else:
+            raise serializers.ValidationError("Both username and password are required.")
+
+        return data
