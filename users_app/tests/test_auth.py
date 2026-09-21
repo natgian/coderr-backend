@@ -107,3 +107,47 @@ class AuthTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, expected_data)
+
+    def test_user_login_400_fail_invalid_password_or_username(self):
+        """Ensure login fails with a 400 error if the password or username is incorrect."""
+        url = reverse("login")
+        data_wrong_pw = {"username": "SetupUser", "password": "WRONG_Password"}
+
+        response_wrong_pw = self.client.post(url, data_wrong_pw, format="json")
+
+        self.assertEqual(response_wrong_pw.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Invalid username or password", str(response_wrong_pw.data))
+
+        data_wrong_username = {"username": "WrongUser", "password": "setupPassword"}
+
+        response_wrong_username = self.client.post(url, data_wrong_username, format="json")
+
+        self.assertEqual(response_wrong_username.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Invalid username or password", str(response_wrong_username.data))
+
+    def test_user_login_400_fail_missing_field(self):
+        """Ensure login fails with a 400 error if a field is missing."""
+        url = reverse("login")
+        data_missing_pw = {"username": "setupUser"}
+
+        response_missing_pw = self.client.post(url, data_missing_pw, format="json")
+
+        self.assertEqual(response_missing_pw.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("field is required", str(response_missing_pw.data))
+
+        data_missing_username = {"password": "setupPassword"}
+
+        response_missing_username = self.client.post(url, data_missing_username, format="json")
+
+        self.assertEqual(response_missing_username.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("field is required", str(response_missing_username.data))
+
+    def test_user_login_400_fail_blank_fields(self):
+        """Ensure lgoin fails with a 400 error if fields are blank."""
+        url = reverse("login")
+        data = {"username": "", "password": ""}
+
+        response = self.client.post(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("may not be blank", str(response.data))
