@@ -11,19 +11,33 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 from pathlib import Path
 
+# Load environment variables from the .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Directory on the server where uploaded files are physically stored
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+# Base URL used to access these files via the browser
+MEDIA_URL = "/media/"
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
+# Fetch the SECRET_KEY from the environment variables
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Validate that the SECRET_KEY is set and not empty.
+# This prevents the application from running in an insecure state.
+if not SECRET_KEY:
+    raise ImproperlyConfigured("The SECRET_KEY environment variable is missing or empty.")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = {"true": True, "false": False}.get(os.getenv("DEBUG", "false").strip().lower(), False)
