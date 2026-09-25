@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.template import context
 from django.urls import reverse
 
 from rest_framework import status
 
+from profiles_app.models import Profile
 from profiles_app.api.serializers import ProfileSerializer
 from test_utils.base_setup import BaseSetupTestCase
 
@@ -69,4 +71,50 @@ class ProfileDetailTests(BaseSetupTestCase):
         url = reverse("profile-detail", kwargs={"pk": 99999})
         self.authenticate(self.customer_user)
         response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_profile_update_200_success(self):
+        """Ensure that an authenticated user can update their own profile successfully."""
+        url = self.get_profile_url(self.customer_profile)
+        self.authenticate(self.customer_user)
+        updated_data = {"location": "Luzern", "description": "Updated description."}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        updated_profile = Profile.objects.get(id=self.customer_profile.pk)
+        expected_data = ProfileSerializer(updated_profile, context={"request": response.wsgi_request}).data
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_data)
+        self.assertEqual(response.data["location"], "Luzern")
+        self.assertEqual(response.data["description"], "Updated description.")
+        self.assertEqual(response.data["user"], self.customer_user.id)
+
+    def test_profile_update_401_fail_not_authenticated(self):
+        """Ensure that updating a profile fails with an error 401 if the user is not authenticated."""
+        url = self.get_profile_url(self.customer_profile)
+        updated_data = {"location": "Luzern", "description": "Updated description."}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_profile_update_403_fail_not_authorized(self):
+        """Ensure that updating a profile fails with an error 403 if profile does not belong to the user."""
+        url = self.get_profile_url(self.customer_profile)
+        self.authenticate(self.business_user)
+        updated_data = {"location": "Luzern", "description": "Updated description."}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_profile_update_404_fail_not_found(self):
+        """Ensure that updating a profile fails with an error 404 if the profile is not found."""
+        url = reverse("profile-detail", kwargs={"pk": 99999})
+        self.authenticate(self.customer_user)
+        updated_data = {"location": "Luzern", "description": "Updated description."}
+
+        response = self.client.patch(url, updated_data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
