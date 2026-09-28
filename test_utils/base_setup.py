@@ -30,6 +30,14 @@ class BaseSetupTestCase(APITestCase):
             type="business",
         )
 
+        # Create business user
+        self.second_business_user = User.objects.create_user(
+            username="businessUser2",
+            email="business2@mail.com",
+            password="business2Password",
+            type="business",
+        )
+
         # Create empty profile user
         self.empty_pf_user = User.objects.create_user(
             username="emptyProfileUser",
@@ -49,6 +57,30 @@ class BaseSetupTestCase(APITestCase):
             tel="123456789",
             description="This is a description.",
             working_hours="8.00 - 17.00",
+        )
+
+        # Create business user profile
+        self.business_profile = Profile.objects.create(
+            user=self.business_user,
+            first_name="John",
+            last_name="Carter",
+            file="profile_picture.jpg",
+            location="New York",
+            tel="987654321",
+            description="This is a description.",
+            working_hours="9.00 - 18.00",
+        )
+
+        # Create business user profile
+        self.second_business_profile = Profile.objects.create(
+            user=self.second_business_user,
+            first_name="Jane",
+            last_name="Butler",
+            file="profile_picture.jpg",
+            location="San Francisco",
+            tel="111154321",
+            description="This is a description.",
+            working_hours="6.00 - 16.00",
         )
 
         # Create empty user profile
