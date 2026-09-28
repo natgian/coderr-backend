@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate, get_user_model
 
+from profiles_app.models import Profile
+
 User = get_user_model()
 
 
@@ -23,19 +25,25 @@ class RegistrationSerializer(serializers.ModelSerializer):
         if data["password"] != data["repeated_password"]:
             raise serializers.ValidationError("Passwords do not match.")
 
-        if (
-            User.objects.filter(email=data["email"]).exists()
-            or User.objects.filter(username=data["username"]).exists()
-        ):
-            raise serializers.ValidationError(
-                {"non_field_errors": ["Username oder email address already taken"]}
-            )
+        if User.objects.filter(email=data["email"]).exists() or User.objects.filter(username=data["username"]).exists():
+            raise serializers.ValidationError({"non_field_errors": ["Username oder email address already taken"]})
         return data
 
     def create(self, validated_data):
-        """Create and return a new user."""
+        """Create a new user and associated profile with default values for profile fields."""
         validated_data.pop("repeated_password")
         user = User.objects.create_user(**validated_data)
+
+        Profile.objects.create(
+            user=user,
+            first_name="",
+            last_name="",
+            location="",
+            tel="",
+            description="",
+            working_hours="",
+        )
+
         return user
 
 
