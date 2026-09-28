@@ -1,11 +1,9 @@
-from django.urls import path, include
-from rest_framework import routers
+from django.urls import path
 
 from profiles_app.api.views import ProfileViewSet
 
-router = routers.DefaultRouter()
-router.register(r"profiles", ProfileViewSet, basename="profile")
-
 urlpatterns = [
-    path("", include(router.urls)),
+    path("profile/<int:pk>/", ProfileViewSet.as_view({"get": "retrieve", "patch": "partial_update"}), name="profile-detail"),
+    path("profiles/business/", ProfileViewSet.as_view({"get": "business"}), name="profile-business"),
+    path("profiles/customer/", ProfileViewSet.as_view({"get": "customer"}), name="profile-customer"),
 ]

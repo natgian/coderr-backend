@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from profiles_app.models import Profile
-from profiles_app.api.serializers import ProfileDetailSerializer
+from profiles_app.api.serializers import ProfileDetailSerializer, BusinessProfileListSerializer, CustomerProfileListSerializer
 from test_utils.base_setup import BaseSetupTestCase
 
 User = get_user_model()
@@ -121,9 +121,55 @@ class ProfileDetailTests(BaseSetupTestCase):
 
 
 class ProfileListTests(BaseSetupTestCase):
+    """Tests for retrieving lists of business and customer profiles."""
 
     def test_list_business_profiles_200_success(self):
-        url = reverse("profile-detail")
-        # url = reverse("profile-business")
-        # user must be authenticated
-        # response alles ausser "email" und "create_at" --> neuer serializer
+        """Ensure that an authenticated user can retrieve a list of business profiles successfully."""
+        url = reverse("profile-business")
+        self.authenticate(self.customer_user)
+        queryset = Profile.objects.filter(user__type="business")
+
+        response = self.client.get(url)
+
+        expected_data = BusinessProfileListSerializer(queryset, many=True, context={"request": response.wsgi_request}).data
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_data)
+        self.assertEqual(len(response.data), queryset.count())
+        self.assertTrue(all(profile["type"] == "business" for profile in response.data))
+
+    def test_list_business_profiles_401_fail_not_authenticated(self):
+        """
+        Ensure that retrieving a list of business profiles fails with an error 401 if the user is not authenticated.
+        """
+        url = reverse("profile-business")
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_list_customer_profiles_200_success(self):
+        """Ensure that an authenticated user can retrieve a list of customer profiles successfully."""
+        url = reverse("profile-customer")
+        self.authenticate(self.customer_user)
+        queryset = Profile.objects.filter(user__type="customer")
+
+        response = self.client.get(url)
+
+        expected_data = CustomerProfileListSerializer(queryset, many=True, context={"request": response.wsgi_request}).data
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_data)
+        self.assertEqual(len(response.data), queryset.count())
+        self.assertTrue(all(profile["type"] == "customer" for profile in response.data))
+
+    def test_list_customer_profiles_401_fail_not_authenticated(self):
+        """
+        Ensure that retrieving a list of customer profiles fails with an error 401 if the user is not authenticated.
+        """
+
+        url = reverse("profile-customer")
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

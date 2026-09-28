@@ -28,3 +28,39 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["user", "created_at"]
+
+
+class BusinessProfileListSerializer(serializers.ModelSerializer):
+    """Serializer for the business user list view, including related user fields."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+    type = serializers.CharField(source="user.type", read_only=True)
+    file = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "user",
+            "username",
+            "first_name",
+            "last_name",
+            "file",
+            "location",
+            "tel",
+            "description",
+            "working_hours",
+            "type",
+        ]
+
+
+class CustomerProfileListSerializer(serializers.ModelSerializer):
+    """Serializer for the customer user list view, including related user fields."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+    type = serializers.CharField(source="user.type", read_only=True)
+    file = serializers.ImageField(required=False, allow_null=True)
+    uploaded_at = serializers.DateTimeField(source="created_at", read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ["user", "username", "first_name", "last_name", "file", "type", "uploaded_at"]
