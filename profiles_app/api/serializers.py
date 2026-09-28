@@ -3,7 +3,7 @@ from rest_framework import serializers
 from profiles_app.models import Profile
 
 
-class ProfileSerializer(serializers.ModelSerializer):
+class ProfileDetailSerializer(serializers.ModelSerializer):
     """Serializer for the Profile model, including related user fields."""
 
     username = serializers.CharField(source="user.username", read_only=True)

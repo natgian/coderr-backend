@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from profiles_app.models import Profile
-from profiles_app.api.serializers import ProfileSerializer
+from profiles_app.api.serializers import ProfileDetailSerializer
 from test_utils.base_setup import BaseSetupTestCase
 
 User = get_user_model()
@@ -21,7 +21,7 @@ class ProfileDetailTests(BaseSetupTestCase):
 
         response = self.client.get(url)
 
-        expected_data = ProfileSerializer(
+        expected_data = ProfileDetailSerializer(
             self.customer_profile,
             context={"request": response.wsgi_request},
         ).data
@@ -82,7 +82,7 @@ class ProfileDetailTests(BaseSetupTestCase):
         response = self.client.patch(url, updated_data, format="json")
 
         updated_profile = Profile.objects.get(id=self.customer_profile.pk)
-        expected_data = ProfileSerializer(updated_profile, context={"request": response.wsgi_request}).data
+        expected_data = ProfileDetailSerializer(updated_profile, context={"request": response.wsgi_request}).data
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, expected_data)
@@ -118,3 +118,12 @@ class ProfileDetailTests(BaseSetupTestCase):
         response = self.client.patch(url, updated_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ProfileListTests(BaseSetupTestCase):
+
+    def test_list_business_profiles_200_success(self):
+        url = reverse("profile-detail")
+        # url = reverse("profile-business")
+        # user must be authenticated
+        # response alles ausser "email" und "create_at" --> neuer serializer
