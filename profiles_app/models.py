@@ -17,4 +17,6 @@ class Profile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}".strip() or self.user.username
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name} ({self.user.username})"
+        return self.user.username

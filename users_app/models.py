@@ -11,3 +11,6 @@ class CustomUser(AbstractUser):
         ("business", "Business"),
     )
     type = models.CharField(max_length=50, choices=USER_TYPE_CHOICES)
+
+    def __str__(self):
+        return f"{self.username} ({self.get_type_display()})"
