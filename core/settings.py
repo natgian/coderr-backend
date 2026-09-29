@@ -58,8 +58,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     # Local apps
-    "users_app",
+    "offers_app",
     "profiles_app",
+    "users_app",
 ]
 
 MIDDLEWARE = [
