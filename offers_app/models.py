@@ -6,6 +6,8 @@ from decimal import Decimal
 
 
 class Offer(models.Model):
+    """Represents an offer created by a business user, which can have multiple details associated with it."""
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="offers")
     title = models.CharField(max_length=255)
     image = models.ImageField(upload_to="offers/", blank=True, null=True)
@@ -18,6 +20,10 @@ class Offer(models.Model):
 
 
 class OfferDetail(models.Model):
+    """
+    Represents the details of an offer, including title, revisions, delivery time, price, features, and offer type.
+    """
+
     OFFER_TYPE_CHOICES = (
         ("basic", "Basic"),
         ("standard", "Standard"),
