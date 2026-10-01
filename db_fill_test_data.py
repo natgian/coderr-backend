@@ -1,4 +1,7 @@
 from django.contrib.auth import get_user_model
+
+from rest_framework.authtoken.models import Token
+
 from offers_app.models import Offer, OfferDetail
 from profiles_app.models import Profile
 
@@ -9,12 +12,18 @@ Offer.objects.all().delete()
 Profile.objects.all().delete()
 User.objects.filter(username__in=["customerUser", "businessUser", "businessUser2", "emptyProfileUser"]).delete()
 
-print("Creating users and profiles...")
+print("Creating users, tokens and profiles...")
 # Create users
 customer_user = User.objects.create_user(username="customerUser", email="customer@mail.com", password="customerPassword", type="customer")
 business_user = User.objects.create_user(username="businessUser", email="business@mail.com", password="businessPassword", type="business")
 business_user2 = User.objects.create_user(username="businessUser2", email="business2@mail.com", password="business2Password", type="business")
 empty_user = User.objects.create_user(username="emptyProfileUser", email="emptyProfle@mail.com", password="emptyProfilePassword", type="customer")
+
+# Create tokens
+token_customer = Token.objects.create(user=customer_user)
+token_business = Token.objects.create(user=business_user)
+token_business2 = Token.objects.create(user=business_user2)
+token_empty = Token.objects.create(user=empty_user)
 
 # Create profiles
 Profile.objects.create(user=customer_user, first_name="Max", last_name="Muster", location="Zürich", tel="123456789")
