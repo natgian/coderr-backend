@@ -25,6 +25,12 @@ class OfferSerializer(serializers.ModelSerializer):
         model = Offer
         fields = ["id", "title", "image", "description", "details"]
 
+    def validate_details(self, value):
+        """Validate that exactly three OfferDetail instances are provided in the 'details' field."""
+        if len(value) != 3:
+            raise serializers.ValidationError("Exactly 3 details are required.")
+        return value
+
     def create(self, validate_data):
         """Create an Offer instance along with its nested OfferDetail instances."""
 

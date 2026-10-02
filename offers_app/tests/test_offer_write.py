@@ -11,11 +11,11 @@ from test_utils.base_setup import BaseSetupTestCase
 User = get_user_model()
 
 
-class OfferTests(BaseSetupTestCase):
+class OfferCreateTests(BaseSetupTestCase):
     """Tests for creating offers with nested offer details."""
 
     def test_create_offer_201_success(self):
-        """Test the successful creation of an offer with nested offer details."""
+        """Ensure creating an offer with three details succeeds with a 201 and returns the correct data."""
         url = reverse("offer-list")
         self.authenticate(self.business_user)
         initial_offer_count = Offer.objects.count()
@@ -55,3 +55,79 @@ class OfferTests(BaseSetupTestCase):
             self.assertEqual(db_detail.delivery_time_in_days, expected_detail["delivery_time_in_days"])
             self.assertEqual(float(db_detail.price), float(expected_detail["price"]))
             self.assertEqual(db_detail.features, expected_detail["features"])
+
+    def test_create_offer_400_fail_fewer_than_three_details(self):
+        """Ensure creating an offer fails with an error 400 if there are fewer than three details."""
+
+        url = reverse("offer-list")
+        self.authenticate(self.business_user)
+        offer_data = {
+            "title": "Grafikdesign-Paket",
+            "image": None,
+            "description": "Ein umfassendes Grafikdesign-Paket für Unternehmen.",
+            "details": [
+                {"title": "Basic Design", "revisions": 2, "delivery_time_in_days": 5, "price": 100, "features": ["Logo Design", "Visitenkarte"], "offer_type": "basic"},
+            ],
+        }
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_offer_400_fail_invalid_data(self):
+        """Ensure creating an offer fails with an error 400 if the data is invalid."""
+
+        url = reverse("offer-list")
+        self.authenticate(self.business_user)
+        offer_data = {
+            "title": "",
+            "image": 123,
+            "details": [
+                {"title": "Basic Design", "revisions": 2, "delivery_time_in_days": 5, "price": 100, "features": ["Logo Design", "Visitenkarte"], "offer_type": "basic"},
+                {"title": "Standard Design", "revisions": 5, "delivery_time_in_days": 7, "price": 200, "features": ["Logo Design", "Visitenkarte", "Briefpapier"], "offer_type": "standard"},
+                {"title": "Premium Design", "revisions": 10, "delivery_time_in_days": 10, "price": 500, "features": ["Logo Design", "Visitenkarte", "Briefpapier", "Flyer"], "offer_type": "premium"},
+            ],
+        }
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_offer_401_fail_not_authenticated(self):
+        """Ensure creating an offer fails with an error 401 if the user is not authenticated."""
+
+        url = reverse("offer-list")
+        offer_data = {
+            "title": "Grafikdesign-Paket",
+            "image": None,
+            "description": "Ein umfassendes Grafikdesign-Paket für Unternehmen.",
+            "details": [
+                {"title": "Basic Design", "revisions": 2, "delivery_time_in_days": 5, "price": 100, "features": ["Logo Design", "Visitenkarte"], "offer_type": "basic"},
+                {"title": "Standard Design", "revisions": 5, "delivery_time_in_days": 7, "price": 200, "features": ["Logo Design", "Visitenkarte", "Briefpapier"], "offer_type": "standard"},
+                {"title": "Premium Design", "revisions": 10, "delivery_time_in_days": 10, "price": 500, "features": ["Logo Design", "Visitenkarte", "Briefpapier", "Flyer"], "offer_type": "premium"},
+            ],
+        }
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_create_offer_403_fail_not_allowed(self):
+        """Ensure creating an offer fails with an error 403 if the user is authenticated but not a business user."""
+
+        url = reverse("offer-list")
+        self.authenticate(self.customer_user)
+        offer_data = {
+            "title": "Grafikdesign-Paket",
+            "image": None,
+            "description": "Ein umfassendes Grafikdesign-Paket für Unternehmen.",
+            "details": [
+                {"title": "Basic Design", "revisions": 2, "delivery_time_in_days": 5, "price": 100, "features": ["Logo Design", "Visitenkarte"], "offer_type": "basic"},
+                {"title": "Standard Design", "revisions": 5, "delivery_time_in_days": 7, "price": 200, "features": ["Logo Design", "Visitenkarte", "Briefpapier"], "offer_type": "standard"},
+                {"title": "Premium Design", "revisions": 10, "delivery_time_in_days": 10, "price": 500, "features": ["Logo Design", "Visitenkarte", "Briefpapier", "Flyer"], "offer_type": "premium"},
+            ],
+        }
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
