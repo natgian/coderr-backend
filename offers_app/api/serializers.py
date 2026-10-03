@@ -27,7 +27,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
     def validate_details(self, value):
         """Validate that exactly three OfferDetail instances are provided in the 'details' field."""
-        if len(value) != 3:
+        if self.instance is None and len(value) != 3:
             raise serializers.ValidationError("Exactly 3 details are required.")
         return value
 
@@ -43,3 +43,25 @@ class OfferSerializer(serializers.ModelSerializer):
             OfferDetail.objects.create(offer=offer, **detail_data)
 
         return offer
+
+    def update(self, instance, validated_data):
+        """Update an Offer instance along with its nested OfferDetail instances."""
+        details_data = validated_data.pop("details", [])
+
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+
+        instance.save()
+
+        for detail_data in details_data:
+            target_offer_type = detail_data["offer_type"]
+            detail_in_db = instance.details.get(offer_type=target_offer_type)
+
+            for field, value in detail_data.items():
+                if field == "offer_type":
+                    continue
+                setattr(detail_in_db, field, value)
+
+            detail_in_db.save()
+
+        return instance

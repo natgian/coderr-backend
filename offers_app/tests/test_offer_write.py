@@ -18,8 +18,10 @@ class OfferCreateTests(BaseSetupTestCase):
         """Ensure creating an offer with three details succeeds with a 201 and returns the correct data."""
         url = reverse("offer-list")
         self.authenticate(self.business_user)
+
         initial_offer_count = Offer.objects.count()
         initial_detail_count = OfferDetail.objects.count()
+
         offer_data = {
             "title": "Grafikdesign-Paket",
             "image": None,
@@ -33,19 +35,22 @@ class OfferCreateTests(BaseSetupTestCase):
 
         response = self.client.post(url, offer_data, format="json")
 
-        created_offer = Offer.objects.get(id=response.data["id"])
-        expected_data = OfferSerializer(created_offer, context={"request": response.wsgi_request}).data
-
+        # response and created offer assertions
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        created_offer = Offer.objects.get(id=response.data["id"])
+        self.assertEqual(created_offer.title, offer_data["title"])
+        self.assertEqual(created_offer.description, offer_data["description"])
+        self.assertFalse(created_offer.image)
+        expected_data = OfferSerializer(created_offer, context={"request": response.wsgi_request}).data
         self.assertEqual(response.data, expected_data)
+
+        # database state assertions
         self.assertEqual(created_offer.user, self.business_user)
         self.assertEqual(created_offer.details.count(), 3)
         self.assertEqual(Offer.objects.count(), initial_offer_count + 1)
         self.assertEqual(OfferDetail.objects.count(), initial_detail_count + 3)
-        self.assertEqual(created_offer.title, offer_data["title"])
-        self.assertEqual(created_offer.description, offer_data["description"])
-        self.assertFalse(created_offer.image)
 
+        # nested detail assertions
         for expected_detail in offer_data["details"]:
             db_detail = created_offer.details.filter(offer_type=expected_detail["offer_type"]).first()
 
@@ -131,3 +136,53 @@ class OfferCreateTests(BaseSetupTestCase):
         response = self.client.post(url, offer_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class OfferUpdateTests(BaseSetupTestCase):
+    """Tests for updating offers with nested offer details."""
+
+    def test_update_offer_200_success(self):
+        """Ensure updating an offer with nested details succeeds with a 200 and returns the correct data."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.business_user)
+
+        updated_data = {
+            "title": "UPDATED OFFER",
+            "details": [
+                {"offer_type": "basic", "revisions": 3, "title": "Basic Web UPDATED"},
+                {"offer_type": "standard", "revisions": 5, "price": 800},
+                {"offer_type": "premium", "features": ["UPDATED", "PREMIUM", "OFFER"]},
+            ],
+        }
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.offer_one.refresh_from_db()
+
+        # response and offer-level assertions
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.offer_one.details.count(), 3)
+        self.assertEqual(self.offer_one.title, "UPDATED OFFER")
+        self.assertEqual(response.data["title"], self.offer_one.title)
+
+        # detail-level assertions
+        basic_detail = self.offer_one.details.get(offer_type="basic")
+        standard_detail = self.offer_one.details.get(offer_type="standard")
+        premium_detail = self.offer_one.details.get(offer_type="premium")
+
+        self.assertEqual(basic_detail.offer_type, "basic")
+        self.assertEqual(standard_detail.offer_type, "standard")
+        self.assertEqual(premium_detail.offer_type, "premium")
+
+        # unchanged fields
+        self.assertEqual(standard_detail.title, "Standard Web")
+        self.assertEqual(premium_detail.title, "Premium Web")
+
+        # updated fields
+        self.assertEqual(basic_detail.revisions, 3)
+        self.assertEqual(basic_detail.title, "Basic Web UPDATED")
+
+        self.assertEqual(standard_detail.revisions, 5)
+        self.assertEqual(standard_detail.price, 800)
+
+        self.assertEqual(premium_detail.features, ["UPDATED", "PREMIUM", "OFFER"])
