@@ -117,7 +117,7 @@ class OfferCreateTests(BaseSetupTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_create_offer_403_fail_not_allowed(self):
+    def test_create_offer_403_fail_not_authorized(self):
         """Ensure creating an offer fails with an error 403 if the user is authenticated but not a business user."""
 
         url = reverse("offer-list")
@@ -186,3 +186,57 @@ class OfferUpdateTests(BaseSetupTestCase):
         self.assertEqual(standard_detail.price, 800)
 
         self.assertEqual(premium_detail.features, ["UPDATED", "PREMIUM", "OFFER"])
+
+    def test_update_offer_400_fail_empty_title(self):
+        """Ensure updating an offer fails with an error 400 if the title is empty."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.business_user)
+
+        updated_data = {"title": ""}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_offer_400_fail_invalid_detail_data(self):
+        """Ensure updating an offer fails with an error 400 if the nested detail data is invalid."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.business_user)
+
+        updated_data = {"details": [{"offer_type": "basic", "revisions": -3, "price": "abc"}]}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_offer_400_fail_invalid_offer_type(self):
+        """Ensure updating an offer fails with an error 400 if the nested detail has an invalid offer_type."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.business_user)
+
+        updated_data = {"details": [{"offer_type": "gold", "revisions": 2, "price": 100}]}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_offer_401_fail_not_authenticated(self):
+        """Ensure updating an offer fails with an error 401 if the user is not authenticated."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+
+        updated_data = {"title": "Updated title"}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_offer_403_fail_not_authorized(self):
+        """Ensure updating an offer fails with an error 403 if the user is authenticated but not the creator of the offer."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.second_business_user)
+
+        updated_data = {"title": "Updated title"}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
