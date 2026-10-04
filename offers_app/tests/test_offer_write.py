@@ -240,3 +240,23 @@ class OfferUpdateTests(BaseSetupTestCase):
         response = self.client.patch(url, updated_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_offer_404_fail_not_found(self):
+        """Ensure updating an offer fails with an error 404 if the offer does not exist."""
+        url = reverse("offer-detail", kwargs={"pk": 99999})
+        self.authenticate(self.business_user)
+
+        updated_data = {"title": "Updated title"}
+
+        response = self.client.patch(url, updated_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        print(response.data)
+
+
+class OfferDeleteTests(BaseSetupTestCase):
+    """"""
+
+    def test_delete_offer_204_success(self):
+        """"""
+        pass
