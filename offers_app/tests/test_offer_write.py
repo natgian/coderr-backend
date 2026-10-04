@@ -251,12 +251,44 @@ class OfferUpdateTests(BaseSetupTestCase):
         response = self.client.patch(url, updated_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        print(response.data)
 
 
 class OfferDeleteTests(BaseSetupTestCase):
-    """"""
+    """Tests for deleting offers."""
 
     def test_delete_offer_204_success(self):
-        """"""
-        pass
+        """Ensure deleting an offer succeeds with a 204 and removes the offer and its details from the database."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.business_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Offer.objects.filter(pk=self.offer_one.pk).exists())
+        self.assertFalse(OfferDetail.objects.filter(offer=self.offer_one).exists())
+
+    def test_delete_offer_401_fail_not_authenticated(self):
+        """Ensure deleting an offer fails with an error 401 if the user is not authenticated."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_delete_offer_403_fail_not_authorized(self):
+        """Ensure deleting an offer fails with an error 403 if the user is authenticated but not the creator of the offer."""
+        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        self.authenticate(self.second_business_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_offer_404_fail_not_found(self):
+        """Ensure deleting an offer fails with an error 404 if the offer does not exist."""
+        url = reverse("offer-detail", kwargs={"pk": 99999})
+        self.authenticate(self.business_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
