@@ -233,7 +233,7 @@ class OfferUpdateTests(BaseSetupTestCase):
     def test_update_offer_403_fail_not_authorized(self):
         """Ensure updating an offer fails with an error 403 if the user is authenticated but not the creator of the offer."""
         url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
-        self.authenticate(self.second_business_user)
+        self.authenticate(self.business_user2)
 
         updated_data = {"title": "Updated title"}
 
@@ -278,7 +278,7 @@ class OfferDeleteTests(BaseSetupTestCase):
     def test_delete_offer_403_fail_not_authorized(self):
         """Ensure deleting an offer fails with an error 403 if the user is authenticated but not the creator of the offer."""
         url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
-        self.authenticate(self.second_business_user)
+        self.authenticate(self.business_user2)
 
         response = self.client.delete(url)
 

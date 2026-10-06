@@ -32,7 +32,7 @@ class BaseSetupTestCase(APITestCase):
         )
 
         # Create business user
-        self.second_business_user = User.objects.create_user(
+        self.business_user2 = User.objects.create_user(
             username="businessUser2",
             email="business2@mail.com",
             password="business2Password",
@@ -73,8 +73,8 @@ class BaseSetupTestCase(APITestCase):
         )
 
         # Create business user profile
-        self.second_business_profile = Profile.objects.create(
-            user=self.second_business_user,
+        self.usiness_profile2 = Profile.objects.create(
+            user=self.business_user2,
             first_name="Jane",
             last_name="Butler",
             file="profile_picture.jpg",

@@ -108,7 +108,6 @@ OfferDetail.objects.create(
     offer_type="premium",
 )
 
-
 offer_social = Offer.objects.create(
     user=business_user2,
     title="Social Media Marketing-Paket",
