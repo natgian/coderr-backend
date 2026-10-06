@@ -12,7 +12,7 @@ User = get_user_model()
 
 class BaseSetupTestCase(APITestCase):
     def setUp(self):
-        """Set up initial data for test cases, including users, tokens, and profiles."""
+        """Set up initial data for test cases, including users, tokens, profiles, offers and offer details."""
 
         # USERS
         # Create customer user
@@ -73,7 +73,7 @@ class BaseSetupTestCase(APITestCase):
         )
 
         # Create business user profile
-        self.usiness_profile2 = Profile.objects.create(
+        self.business_profile2 = Profile.objects.create(
             user=self.business_user2,
             first_name="Jane",
             last_name="Butler",
@@ -97,16 +97,14 @@ class BaseSetupTestCase(APITestCase):
         )
 
         # OFFERS & DETAILS
-        # Create offer
-        self.offer_one = Offer.objects.create(
+        # Create offers
+        self.offer_web = Offer.objects.create(
             user=self.business_user,
             title="Webdesign & Entwicklung-Paket",
-            image=None,
             description="Erstellung einer modernen, responsiven Website für Ihren digitalen Auftritt.",
         )
-
-        OfferDetail.objects.create(
-            offer=self.offer_one,
+        self.detail_web_basic = OfferDetail.objects.create(
+            offer=self.offer_web,
             title="Basic Web",
             revisions=2,
             delivery_time_in_days=10,
@@ -114,9 +112,8 @@ class BaseSetupTestCase(APITestCase):
             features=["One-Page Website", "Responsives Design", "Kontaktformular"],
             offer_type="basic",
         )
-
-        OfferDetail.objects.create(
-            offer=self.offer_one,
+        self.detail_web_standard = OfferDetail.objects.create(
+            offer=self.offer_web,
             title="Standard Web",
             revisions=4,
             delivery_time_in_days=20,
@@ -124,9 +121,8 @@ class BaseSetupTestCase(APITestCase):
             features=["Website mit bis zu 5 Unterseiten", "Responsives Design", "Kontaktformular", "Basis-SEO-Optimierung", "CMS-Einrichtung (WordPress)"],
             offer_type="standard",
         )
-
-        OfferDetail.objects.create(
-            offer=self.offer_one,
+        self.detail_web_premium = OfferDetail.objects.create(
+            offer=self.offer_web,
             title="Premium Web",
             revisions=8,
             delivery_time_in_days=30,
@@ -143,9 +139,77 @@ class BaseSetupTestCase(APITestCase):
             offer_type="premium",
         )
 
+        self.offer_graphic = Offer.objects.create(
+            user=self.business_user,
+            title="Grafikdesign-Paket",
+            description="Ein umfassendes Grafikdesign-Paket für Unternehmen.",
+        )
+        self.detail_graphic_basic = OfferDetail.objects.create(
+            offer=self.offer_graphic,
+            title="Basic Design",
+            revisions=2,
+            delivery_time_in_days=5,
+            price=100,
+            features=["Logo Design", "Visitenkarte"],
+            offer_type="basic",
+        )
+        self.detail_graphic_standard = OfferDetail.objects.create(
+            offer=self.offer_graphic,
+            title="Standard Design",
+            revisions=5,
+            delivery_time_in_days=7,
+            price=200,
+            features=["Logo Design", "Visitenkarte", "Briefpapier"],
+            offer_type="standard",
+        )
+        self.detail_graphic_premium = OfferDetail.objects.create(
+            offer=self.offer_graphic,
+            title="Premium Design",
+            revisions=10,
+            delivery_time_in_days=10,
+            price=500,
+            features=["Logo Design", "Visitenkarte", "Briefpapier", "Flyer"],
+            offer_type="premium",
+        )
+
+        self.offer_social = Offer.objects.create(
+            user=self.business_user2,
+            title="Social Media Marketing-Paket",
+            description="Professionelle Betreuung und Content-Erstellung für Ihre Social-Media-Kanäle.",
+        )
+        self.detail_social_basic = OfferDetail.objects.create(
+            offer=self.offer_social,
+            title="Basic Social",
+            revisions=1,
+            delivery_time_in_days=7,
+            price=150,
+            features=["3 Post-Vorlagen", "Kanal-Optimierung"],
+            offer_type="basic",
+        )
+        self.detail_social_standard = OfferDetail.objects.create(
+            offer=self.offer_social,
+            title="Standard Social",
+            revisions=3,
+            delivery_time_in_days=10,
+            price=350,
+            features=["6 Post-Vorlagen", "Kanal-Optimierung", "1 Video/Reel", "Hashtag-Analyse"],
+            offer_type="standard",
+        )
+        self.detail_social_premium = OfferDetail.objects.create(
+            offer=self.offer_social,
+            title="Premium Social",
+            revisions=5,
+            delivery_time_in_days=14,
+            price=750,
+            features=["12 Post-Vorlagen", "Kanal-Optimierung", "3 Videos/Reels", "Hashtag-Analyse", "Redaktionsplan", "Monatliches Reporting"],
+            offer_type="premium",
+        )
+
     def authenticate(self, user):
+        """Create a token for the given user and set the authorization header for the test client."""
         token, created = Token.objects.get_or_create(user=user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
 
     def get_profile_url(self, profile):
+        """Return the URL for the profile detail view for the given profile."""
         return reverse("profile-detail", kwargs={"pk": profile.pk})
