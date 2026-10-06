@@ -33,3 +33,20 @@ class OfferDetailReadTests(BaseSetupTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, expected_data)
+
+    def test_list_offer_details_401_fail_not_authenticated(self):
+        """Ensure retrieving offer details fails with an error 401 if the user is not authenticated."""
+        url = reverse("offerdetail-detail", kwargs={"pk": self.detail_web_basic.pk})
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_list_offer_details_404_fail_not_found(self):
+        """Ensure retrieving offer details fails with an error 404 if the offer detail does not exist."""
+        url = reverse("offerdetail-detail", kwargs={"pk": 99999})
+        self.authenticate(self.customer_user)
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
