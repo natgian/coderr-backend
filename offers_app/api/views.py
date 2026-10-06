@@ -1,9 +1,9 @@
-from rest_framework import viewsets
+from rest_framework import generics, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from offers_app.api.permissions import IsBusinessUserForCreate, IsOfferCreatorOrReadOnly
-from offers_app.api.serializers import OfferSerializer
-from offers_app.models import Offer
+from offers_app.api.serializers import OfferDetailSerializer, OfferSerializer
+from offers_app.models import Offer, OfferDetail
 
 
 class OfferViewSet(viewsets.ModelViewSet):
@@ -17,3 +17,10 @@ class OfferViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return [AllowAny()]
         return super().get_permissions()
+
+
+class OfferDetailView(generics.RetrieveAPIView):
+    """View for retrieving details of a specific offer detail."""
+
+    queryset = OfferDetail.objects.all()
+    serializer_class = OfferDetailSerializer
