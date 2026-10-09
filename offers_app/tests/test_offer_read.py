@@ -117,3 +117,35 @@ class OfferListTests(BaseSetupTestCase):
 
         self.assertIsNotNone(listed_offer)
         self.assertEqual(listed_offer, expected_offer_data)
+
+    def test_list_offers_filter_by_creator_id(self):
+        """Ensure that filtering offers by creator ID returns the expected offers."""
+        url = reverse("offer-list")
+
+        expected_offers = Offer.objects.filter(user=self.business_user)
+        expected_count = expected_offers.count()
+
+        response = self.client.get(
+            url,
+            {
+                "creator_id": self.business_user.pk,
+                "limit": expected_count,
+            },
+        )
+
+        # response assertion
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # filter assertion
+        self.assertEqual(response.data["count"], expected_count)
+        self.assertEqual(len(response.data["results"]), expected_count)
+
+        result_ids = []
+        for offer in response.data["results"]:
+            result_ids.append(offer["id"])
+
+        expected_ids = []
+        for offer in expected_offers:
+            expected_ids.append(offer.id)
+
+        self.assertCountEqual(result_ids, expected_ids)
