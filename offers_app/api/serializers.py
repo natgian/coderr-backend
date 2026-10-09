@@ -1,6 +1,21 @@
+from django.contrib.auth import get_user_model
+
 from rest_framework import serializers
 
 from offers_app.models import Offer, OfferDetail
+from profiles_app.models import Profile
+
+User = get_user_model()
+
+
+class OfferUserDetailSerializer(serializers.ModelSerializer):
+    """Serializer for the Profile model, used to include user profile details in the OfferListSerializer."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ["first_name", "last_name", "username"]
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
@@ -14,6 +29,16 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         model = OfferDetail
         fields = ["id", "title", "revisions", "delivery_time_in_days", "price", "features", "offer_type"]
         read_only_fields = ["offer"]
+
+
+class OfferDetailLinkSerializer(serializers.ModelSerializer):
+    """Serializer for the OfferDetail model, providing a hyperlink to the detail view of each OfferDetail instance."""
+
+    url = serializers.HyperlinkedIdentityField(view_name="offerdetail-detail")
+
+    class Meta:
+        model = OfferDetail
+        fields = ["id", "url"]
 
 
 class OfferSerializer(serializers.ModelSerializer):
@@ -67,3 +92,18 @@ class OfferSerializer(serializers.ModelSerializer):
             detail_in_db.save()
 
         return instance
+
+
+class OfferListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing Offer instances, including annotated fields for minimum price and delivery time, as well as user profile details.
+    """
+
+    details = OfferDetailLinkSerializer(many=True, read_only=True)
+    min_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, coerce_to_string=False)
+    min_delivery_time = serializers.IntegerField(read_only=True)
+    user_details = OfferUserDetailSerializer(source="user.profile", read_only=True)
+
+    class Meta:
+        model = Offer
+        fields = ["id", "user", "title", "image", "description", "created_at", "updated_at", "details", "min_price", "min_delivery_time", "user_details"]
