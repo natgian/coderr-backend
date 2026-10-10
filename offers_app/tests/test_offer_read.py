@@ -53,9 +53,7 @@ class OfferDetailReadTests(BaseSetupTestCase):
 
 
 class OfferListTests(BaseSetupTestCase):
-    """
-    Tests for retrieving the list of offers, including annotated minimum price and delivery time for each offer.
-    """
+    """Tests for retrieving the list of offers, including annotated minimum price and delivery time for each offer."""
 
     def test_list_offers_200_success(self):
         """
@@ -101,7 +99,7 @@ class OfferListTests(BaseSetupTestCase):
         # response assertion
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # pagination assertions
+        # result count and pagination assertions
         self.assertEqual(response.data["count"], offer_count)
         self.assertEqual(len(response.data["results"]), offer_count)
         self.assertIsNone(response.data["previous"])
@@ -117,6 +115,10 @@ class OfferListTests(BaseSetupTestCase):
 
         self.assertIsNotNone(listed_offer)
         self.assertEqual(listed_offer, expected_offer_data)
+
+
+class OfferListFilterTests(BaseSetupTestCase):
+    """Tests for filtering the list of offers based on creator ID, minimum price and maximum delivery time."""
 
     def test_list_offers_filter_by_creator_id(self):
         """Ensure that filtering offers by creator ID returns the expected offers."""
@@ -136,7 +138,7 @@ class OfferListTests(BaseSetupTestCase):
         # response assertion
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # filter assertion
+        # filter assertions
         self.assertEqual(response.data["count"], expected_count)
         self.assertEqual(len(response.data["results"]), expected_count)
 
@@ -149,3 +151,95 @@ class OfferListTests(BaseSetupTestCase):
             expected_ids.append(offer.id)
 
         self.assertCountEqual(result_ids, expected_ids)
+
+    def test_list_offers_filter_by_min_price(self):
+        """Ensure that filtering offers by minimum price returns the expected offers."""
+        url = reverse("offer-list")
+        min_price_param = 200.00
+
+        expected_ids = []
+        for offer in Offer.objects.prefetch_related("details"):
+            prices = []
+            for detail in offer.details.all():
+                prices.append(detail.price)
+
+            if prices and min(prices) >= min_price_param:
+                expected_ids.append(offer.pk)
+
+        expected_count = len(expected_ids)
+
+        response = self.client.get(
+            url,
+            {
+                "min_price": min_price_param,
+                "limit": expected_count,
+            },
+        )
+
+        # response assertion
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # filter assertions
+        result_ids = []
+        for offer in response.data["results"]:
+            result_ids.append(offer["id"])
+
+        self.assertEqual(response.data["count"], expected_count)
+        self.assertCountEqual(result_ids, expected_ids)
+
+    def test_list_offers_filter_by_max_delivery_time(self):
+        """Ensure that filtering offers by maximum delivery time returns the expected offers."""
+        url = reverse("offer-list")
+        max_delivery_time_param = 5
+
+        expected_ids = []
+        for offer in Offer.objects.prefetch_related("details"):
+            delivery_times = []
+            for detail in offer.details.all():
+                delivery_times.append(detail.delivery_time_in_days)
+
+            if delivery_times and min(delivery_times) <= max_delivery_time_param:
+                expected_ids.append(offer.pk)
+
+        expected_count = len(expected_ids)
+
+        response = self.client.get(
+            url,
+            {
+                "max_delivery_time": max_delivery_time_param,
+                "limit": expected_count,
+            },
+        )
+
+        # response assertion
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # filter assertions
+        result_ids = []
+        for offer in response.data["results"]:
+            result_ids.append(offer["id"])
+
+        self.assertEqual(response.data["count"], expected_count)
+        self.assertCountEqual(result_ids, expected_ids)
+
+    def test_list_offers_invalid_filter_parameters(self):
+        """
+        Ensure listing offers returns an error 400 if the filter parameters are invalid.
+        Checks for invalid creator_id, min_price, and max_delivery_time values.
+        """
+        url = reverse("offer-list")
+        invalid_cases = [
+            ("creator_id", "abc"),
+            ("creator_id", 0),
+            ("min_price", "abc"),
+            ("min_price", -10),
+            ("max_delivery_time", "abc"),
+            ("max_delivery_time", 0),
+            ("max_delivery_time", -5),
+            ("max_delivery_time", 12.5),
+        ]
+
+        for param, value in invalid_cases:
+            with self.subTest(param=param, value=value):
+                response = self.client.get(url, {param: value})
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
