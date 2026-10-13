@@ -1,7 +1,7 @@
 from django.db.models import Min
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, viewsets
+from rest_framework import filters, generics, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from offers_app.api.filters import OfferFilter
@@ -17,8 +17,9 @@ class OfferViewSet(viewsets.ModelViewSet):
 
     queryset = Offer.objects.all()
     serializer_class = OfferSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = OfferFilter
+    search_fields = ["title", "description"]
     permission_classes = [
         IsAuthenticated,
         IsBusinessUserForCreate,
