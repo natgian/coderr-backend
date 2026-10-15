@@ -5,6 +5,7 @@ from rest_framework import filters, generics, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from offers_app.api.filters import OfferFilter
+from offers_app.api.pagination import OffersPagination
 from offers_app.api.permissions import IsBusinessUserForCreate, IsOfferCreatorOrReadOnly
 from offers_app.api.serializers import OfferDetailSerializer, OfferListSerializer, OfferSerializer
 from offers_app.models import Offer, OfferDetail
@@ -22,6 +23,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     search_fields = ["title", "description"]
     ordering_fields = ["updated_at", "min_price"]
     ordering = ["-updated_at"]
+    pagination_class = OffersPagination
     permission_classes = [
         IsAuthenticated,
         IsBusinessUserForCreate,

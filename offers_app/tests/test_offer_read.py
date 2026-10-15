@@ -94,7 +94,7 @@ class OfferListTests(BaseSetupTestCase):
             },
         }
 
-        response = self.client.get(url, {"limit": offer_count})
+        response = self.client.get(url, {"page_size": offer_count})
 
         # response assertion
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -131,7 +131,7 @@ class OfferListFilterTests(BaseSetupTestCase):
             url,
             {
                 "creator_id": self.business_user.pk,
-                "limit": expected_count,
+                "page_size": expected_count,
             },
         )
 
@@ -172,7 +172,7 @@ class OfferListFilterTests(BaseSetupTestCase):
             url,
             {
                 "min_price": min_price_param,
-                "limit": expected_count,
+                "page_size": expected_count,
             },
         )
 
@@ -207,7 +207,7 @@ class OfferListFilterTests(BaseSetupTestCase):
             url,
             {
                 "max_delivery_time": max_delivery_time_param,
-                "limit": expected_count,
+                "page_size": expected_count,
             },
         )
 
@@ -259,7 +259,7 @@ class OfferListOrderingTests(BaseSetupTestCase):
 
         for param, reverse_flag in test_cases:
             with self.subTest(param=param):
-                response = self.client.get(url, {"ordering": param, "limit": offer_count})
+                response = self.client.get(url, {"ordering": param, "page_size": offer_count})
 
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -295,7 +295,7 @@ class OfferListOrderingTests(BaseSetupTestCase):
 
         for param, reverse_flag in test_cases:
             with self.subTest(param=param):
-                response = self.client.get(url, {"ordering": param, "limit": offer_count})
+                response = self.client.get(url, {"ordering": param, "page_size": offer_count})
 
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
 
