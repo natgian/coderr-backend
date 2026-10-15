@@ -17,9 +17,11 @@ class OfferViewSet(viewsets.ModelViewSet):
 
     queryset = Offer.objects.all()
     serializer_class = OfferSerializer
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     filterset_class = OfferFilter
     search_fields = ["title", "description"]
+    ordering_fields = ["updated_at", "min_price"]
+    ordering = ["-updated_at"]
     permission_classes = [
         IsAuthenticated,
         IsBusinessUserForCreate,

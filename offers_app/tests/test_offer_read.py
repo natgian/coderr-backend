@@ -1,5 +1,7 @@
-from django.contrib.auth import get_user_model
+from datetime import timedelta
+
 from django.urls import reverse
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.fields import DateTimeField
@@ -8,13 +10,11 @@ from offers_app.models import Offer
 
 from test_utils.base_setup import BaseSetupTestCase
 
-User = get_user_model()
-
 
 class OfferDetailReadTests(BaseSetupTestCase):
     """Tests for retrieving offer details."""
 
-    def test_list_offer_details_200_success(self):
+    def test_retrieve_offer_details_200_success(self):
         """Ensure that retrieving offer details returns a 200 OK status and the expected data."""
         url = reverse("offerdetail-detail", kwargs={"pk": self.detail_web_basic.pk})
         self.authenticate(self.business_user)
@@ -34,7 +34,7 @@ class OfferDetailReadTests(BaseSetupTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, expected_data)
 
-    def test_list_offer_details_401_fail_not_authenticated(self):
+    def test_retrieve_offer_details_401_fail_not_authenticated(self):
         """Ensure retrieving offer details fails with an error 401 if the user is not authenticated."""
         url = reverse("offerdetail-detail", kwargs={"pk": self.detail_web_basic.pk})
 
@@ -42,7 +42,7 @@ class OfferDetailReadTests(BaseSetupTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_list_offer_details_404_fail_not_found(self):
+    def test_retrieve_offer_details_404_fail_not_found(self):
         """Ensure retrieving offer details fails with an error 404 if the offer detail does not exist."""
         url = reverse("offerdetail-detail", kwargs={"pk": 99999})
         self.authenticate(self.customer_user)
@@ -243,3 +243,68 @@ class OfferListFilterTests(BaseSetupTestCase):
             with self.subTest(param=param, value=value):
                 response = self.client.get(url, {param: value})
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class OfferListOrderingTests(BaseSetupTestCase):
+    """
+    Tests for ordering the list of offers based on minimum price and updated_at timestamp,
+    ensuring that the offers are returned in the expected order for both ascending and descending cases.
+    """
+
+    def test_ordering_by_min_price(self):
+        """Ensure that ordering offers by minimum price returns the expected order of offers in ascending and descending order."""
+        url = reverse("offer-list")
+        offer_count = Offer.objects.count()
+        test_cases = [("min_price", False), ("-min_price", True)]
+
+        for param, reverse_flag in test_cases:
+            with self.subTest(param=param):
+                response = self.client.get(url, {"ordering": param, "limit": offer_count})
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+                prices = []
+                for offer in response.data["results"]:
+                    prices.append(offer["min_price"])
+
+                direction = "descending" if reverse_flag else "ascending"
+                error_msg = f"The prices should be sorted {direction}"
+
+                self.assertEqual(len(prices), offer_count, msg="The API did not return all the listings.")
+                self.assertEqual(prices, sorted(prices, reverse=reverse_flag), msg=error_msg)
+
+    def test_ordering_by_updated_at(self):
+        """Ensure that ordering offers by updated_at returns the expected order of offers in ascending and descending order."""
+        url = reverse("offer-list")
+        offer_count = Offer.objects.count()
+        test_cases = [("updated_at", False), ("-updated_at", True)]
+        now = timezone.now()
+
+        Offer.objects.filter(pk=self.offer_web.pk).update(
+            created_at=now - timedelta(days=10),
+            updated_at=now - timedelta(days=8),
+        )
+        Offer.objects.filter(pk=self.offer_graphic.pk).update(
+            created_at=now - timedelta(days=6),
+            updated_at=now - timedelta(days=3),
+        )
+        Offer.objects.filter(pk=self.offer_social.pk).update(
+            created_at=now - timedelta(days=2),
+            updated_at=now,
+        )
+
+        for param, reverse_flag in test_cases:
+            with self.subTest(param=param):
+                response = self.client.get(url, {"ordering": param, "limit": offer_count})
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+                updated_at = []
+                for offer in response.data["results"]:
+                    updated_at.append(offer["updated_at"])
+
+                direction = "descending" if reverse_flag else "ascending"
+                error_msg = f"The offers should be sorted {direction}"
+
+                self.assertEqual(len(updated_at), offer_count, msg="The API did not return all the listings.")
+                self.assertEqual(updated_at, sorted(updated_at, reverse=reverse_flag), msg=error_msg)
