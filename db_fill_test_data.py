@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from rest_framework.authtoken.models import Token
 
@@ -139,6 +142,21 @@ OfferDetail.objects.create(
     price=750,
     features=["12 Post-Vorlagen", "Kanal-Optimierung", "3 Videos/Reels", "Hashtag-Analyse", "Redaktionsplan", "Monatliches Reporting"],
     offer_type="premium",
+)
+
+# Update offers "updated_at" values
+now = timezone.now()
+Offer.objects.filter(pk=offer_web.pk).update(
+    created_at=now - timedelta(days=10),
+    updated_at=now - timedelta(days=8),
+)
+Offer.objects.filter(pk=offer_graphic.pk).update(
+    created_at=now - timedelta(days=6),
+    updated_at=now - timedelta(days=3),
+)
+Offer.objects.filter(pk=offer_social.pk).update(
+    created_at=now - timedelta(days=2),
+    updated_at=now,
 )
 
 print("Database successfully populated with all test data.")
