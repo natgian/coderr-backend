@@ -143,7 +143,7 @@ class OfferUpdateTests(BaseSetupTestCase):
 
     def test_update_offer_200_success(self):
         """Ensure updating an offer with nested details succeeds with a 200 and returns the correct data."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user)
 
         updated_data = {
@@ -157,18 +157,18 @@ class OfferUpdateTests(BaseSetupTestCase):
 
         response = self.client.patch(url, updated_data, format="json")
 
-        self.offer_one.refresh_from_db()
+        self.offer_web.refresh_from_db()
 
         # response and offer-level assertions
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.offer_one.details.count(), 3)
-        self.assertEqual(self.offer_one.title, "UPDATED OFFER")
-        self.assertEqual(response.data["title"], self.offer_one.title)
+        self.assertEqual(self.offer_web.details.count(), 3)
+        self.assertEqual(self.offer_web.title, "UPDATED OFFER")
+        self.assertEqual(response.data["title"], self.offer_web.title)
 
         # detail-level assertions
-        basic_detail = self.offer_one.details.get(offer_type="basic")
-        standard_detail = self.offer_one.details.get(offer_type="standard")
-        premium_detail = self.offer_one.details.get(offer_type="premium")
+        basic_detail = self.offer_web.details.get(offer_type="basic")
+        standard_detail = self.offer_web.details.get(offer_type="standard")
+        premium_detail = self.offer_web.details.get(offer_type="premium")
 
         self.assertEqual(basic_detail.offer_type, "basic")
         self.assertEqual(standard_detail.offer_type, "standard")
@@ -189,7 +189,7 @@ class OfferUpdateTests(BaseSetupTestCase):
 
     def test_update_offer_400_fail_empty_title(self):
         """Ensure updating an offer fails with an error 400 if the title is empty."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user)
 
         updated_data = {"title": ""}
@@ -200,7 +200,7 @@ class OfferUpdateTests(BaseSetupTestCase):
 
     def test_update_offer_400_fail_invalid_detail_data(self):
         """Ensure updating an offer fails with an error 400 if the nested detail data is invalid."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user)
 
         updated_data = {"details": [{"offer_type": "basic", "revisions": -3, "price": "abc"}]}
@@ -211,7 +211,7 @@ class OfferUpdateTests(BaseSetupTestCase):
 
     def test_update_offer_400_fail_invalid_offer_type(self):
         """Ensure updating an offer fails with an error 400 if the nested detail has an invalid offer_type."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user)
 
         updated_data = {"details": [{"offer_type": "gold", "revisions": 2, "price": 100}]}
@@ -222,7 +222,7 @@ class OfferUpdateTests(BaseSetupTestCase):
 
     def test_update_offer_401_fail_not_authenticated(self):
         """Ensure updating an offer fails with an error 401 if the user is not authenticated."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
 
         updated_data = {"title": "Updated title"}
 
@@ -232,7 +232,7 @@ class OfferUpdateTests(BaseSetupTestCase):
 
     def test_update_offer_403_fail_not_authorized(self):
         """Ensure updating an offer fails with an error 403 if the user is authenticated but not the creator of the offer."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user2)
 
         updated_data = {"title": "Updated title"}
@@ -258,18 +258,18 @@ class OfferDeleteTests(BaseSetupTestCase):
 
     def test_delete_offer_204_success(self):
         """Ensure deleting an offer succeeds with a 204 and removes the offer and its details from the database."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user)
 
         response = self.client.delete(url)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Offer.objects.filter(pk=self.offer_one.pk).exists())
-        self.assertFalse(OfferDetail.objects.filter(offer=self.offer_one).exists())
+        self.assertFalse(Offer.objects.filter(pk=self.offer_web.pk).exists())
+        self.assertFalse(OfferDetail.objects.filter(offer=self.offer_web).exists())
 
     def test_delete_offer_401_fail_not_authenticated(self):
         """Ensure deleting an offer fails with an error 401 if the user is not authenticated."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
 
         response = self.client.delete(url)
 
@@ -277,7 +277,7 @@ class OfferDeleteTests(BaseSetupTestCase):
 
     def test_delete_offer_403_fail_not_authorized(self):
         """Ensure deleting an offer fails with an error 403 if the user is authenticated but not the creator of the offer."""
-        url = reverse("offer-detail", kwargs={"pk": self.offer_one.pk})
+        url = reverse("offer-detail", kwargs={"pk": self.offer_web.pk})
         self.authenticate(self.business_user2)
 
         response = self.client.delete(url)
