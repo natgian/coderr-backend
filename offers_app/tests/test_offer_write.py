@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from rest_framework import status
 
-from offers_app.api.serializers import OfferSerializer
+from offers_app.api.serializers import OfferWriteSerializer
 from offers_app.models import Offer, OfferDetail
 
 from test_utils.base_setup import BaseSetupTestCase
@@ -41,7 +41,7 @@ class OfferCreateTests(BaseSetupTestCase):
         self.assertEqual(created_offer.title, offer_data["title"])
         self.assertEqual(created_offer.description, offer_data["description"])
         self.assertFalse(created_offer.image)
-        expected_data = OfferSerializer(created_offer, context={"request": response.wsgi_request}).data
+        expected_data = OfferWriteSerializer(created_offer, context={"request": response.wsgi_request}).data
         self.assertEqual(response.data, expected_data)
 
         # database state assertions

@@ -334,3 +334,61 @@ class OfferListPaginationTests(BaseSetupTestCase):
         self.assertIsNotNone(second_page_response.data["next"])
         self.assertIsNotNone(second_page_response.data["previous"])
         self.assertNotEqual(first_page_response.data["results"][0]["id"], second_page_response.data["results"][0]["id"])
+
+
+class OfferRetrieveTests(BaseSetupTestCase):
+    """
+    Tests for retrieving a single offer, ensuring that the API returns the expected data, including annotated minimum price and delivery time.
+    """
+
+    def test_retrieve_single_offer_200_success(self):
+        """
+        Ensure that retrieving a single offer returns a 200 OK status and the expected data, including annotated minimum price and delivery time.
+        """
+        url = self.get_offer_url(self.offer_social)
+        self.authenticate(self.customer_user)
+
+        details = [self.detail_social_basic, self.detail_social_standard, self.detail_social_premium]
+
+        expected_details = []
+        for detail in details:
+            expected_details.append(
+                {
+                    "id": detail.id,
+                    "url": f"http://testserver/api/offerdetails/{detail.id}/",
+                }
+            )
+
+        expected_min_price = min(detail.price for detail in details)
+        expected_min_delivery_time = min(detail.delivery_time_in_days for detail in details)
+
+        expected_offer_data = {
+            "id": self.offer_social.pk,
+            "user": self.business_user2.pk,
+            "title": self.offer_social.title,
+            "image": None,
+            "description": self.offer_social.description,
+            "created_at": DateTimeField().to_representation(self.offer_social.created_at),
+            "updated_at": DateTimeField().to_representation(self.offer_social.updated_at),
+            "details": expected_details,
+            "min_price": expected_min_price,
+            "min_delivery_time": expected_min_delivery_time,
+        }
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, expected_offer_data)
+
+    def test_retrieve_offer_401_fail_not_authenticated(self):
+        """Ensure retrieving a single offer fails with an error 401 if the user is not authenticated."""
+        url = self.get_offer_url(self.offer_social)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_retrieve_offer_404_fail_not_found(self):
+        """Ensure retrieving a single offer fails with an error 404 if the offer does not exist."""
+        url = reverse("offer-detail", kwargs={"pk": 99999})
+        self.authenticate(self.customer_user)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

@@ -213,3 +213,7 @@ class BaseSetupTestCase(APITestCase):
     def get_profile_url(self, profile):
         """Return the URL for the profile detail view for the given profile."""
         return reverse("profile-detail", kwargs={"pk": profile.pk})
+
+    def get_offer_url(self, offer):
+        """Return the URL for the offer view for the given offer."""
+        return reverse("offer-detail", kwargs={"pk": offer.pk})

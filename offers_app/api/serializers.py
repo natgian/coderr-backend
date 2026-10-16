@@ -20,7 +20,7 @@ class OfferUserDetailSerializer(serializers.ModelSerializer):
 
 class OfferDetailSerializer(serializers.ModelSerializer):
     """
-    Serializer for the OfferDetail model, used for nested serialization within the OfferSerializer.
+    Serializer for the OfferDetail model, used for nested serialization within the OfferWriteSerializer.
     """
 
     price = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False)
@@ -41,9 +41,9 @@ class OfferDetailLinkSerializer(serializers.ModelSerializer):
         fields = ["id", "url"]
 
 
-class OfferSerializer(serializers.ModelSerializer):
+class OfferWriteSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Offer model, including nested serialization for OfferDetail instances.
+    Serializer for creating and updating Offer instances, including nested serialization for OfferDetail instances. It validates that exactly three OfferDetail instances are provided during creation.
     """
 
     details = OfferDetailSerializer(many=True)
@@ -94,16 +94,27 @@ class OfferSerializer(serializers.ModelSerializer):
         return instance
 
 
-class OfferListSerializer(serializers.ModelSerializer):
+class OfferReadSerializer(serializers.ModelSerializer):
     """
-    Serializer for listing Offer instances, including annotated fields for minimum price and delivery time, as well as user profile details.
+    Serializer for reading Offer instances, including nested serialization for OfferDetail instances and annotated fields for minimum price and delivery time.
     """
 
     details = OfferDetailLinkSerializer(many=True, read_only=True)
     min_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True, coerce_to_string=False)
     min_delivery_time = serializers.IntegerField(read_only=True)
-    user_details = OfferUserDetailSerializer(source="user.profile", read_only=True)
 
     class Meta:
         model = Offer
-        fields = ["id", "user", "title", "image", "description", "created_at", "updated_at", "details", "min_price", "min_delivery_time", "user_details"]
+        fields = ["id", "user", "title", "image", "description", "created_at", "updated_at", "details", "min_price", "min_delivery_time"]
+
+
+class OfferListSerializer(OfferReadSerializer):
+    """
+    Serializer for listing Offer instances, extending OfferReadSerializer to include user profile details. It provides a more comprehensive view of each offer, including the associated user's profile information.
+    """
+
+    user_details = OfferUserDetailSerializer(source="user.profile", read_only=True)
+
+    class Meta(OfferReadSerializer.Meta):
+        # Inherits all fields from ReadSerializer and adds "user_details"
+        fields = [*OfferReadSerializer.Meta.fields, "user_details"]

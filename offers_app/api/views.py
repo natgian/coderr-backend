@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from offers_app.api.filters import OfferFilter
 from offers_app.api.pagination import OffersPagination
 from offers_app.api.permissions import IsBusinessUserForCreate, IsOfferCreatorOrReadOnly
-from offers_app.api.serializers import OfferDetailSerializer, OfferListSerializer, OfferSerializer
+from offers_app.api.serializers import OfferDetailSerializer, OfferListSerializer, OfferReadSerializer, OfferWriteSerializer
 from offers_app.models import Offer, OfferDetail
 
 
@@ -17,7 +17,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     """
 
     queryset = Offer.objects.all()
-    serializer_class = OfferSerializer
+    serializer_class = OfferWriteSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     filterset_class = OfferFilter
     search_fields = ["title", "description"]
@@ -44,16 +44,22 @@ class OfferViewSet(viewsets.ModelViewSet):
             )
         elif self.action == "retrieve":
             queryset = queryset.prefetch_related("details")
+            queryset = queryset.annotate(
+                min_price=Min("details__price"),
+                min_delivery_time=Min("details__delivery_time_in_days"),
+            )
 
         return queryset
 
     def get_serializer_class(self):
         """
-        Return the appropriate serializer class based on the action being performed. For the 'list' action, use OfferListSerializer, otherwise OfferSerializer.
+        Return the appropriate serializer class based on the action being performed. For the 'list' action, use OfferListSerializer, otherwise OfferWriteSerializer.
         """
         if self.action == "list":
             return OfferListSerializer
-        return OfferSerializer
+        elif self.action == "retrieve":
+            return OfferReadSerializer
+        return OfferWriteSerializer
 
     def get_permissions(self):
         """
