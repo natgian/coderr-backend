@@ -251,7 +251,7 @@ class OfferListOrderingTests(BaseSetupTestCase):
     ensuring that the offers are returned in the expected order for both ascending and descending cases.
     """
 
-    def test_ordering_by_min_price(self):
+    def test_list_offers_ordering_by_min_price(self):
         """Ensure that ordering offers by minimum price returns the expected order of offers in ascending and descending order."""
         url = reverse("offer-list")
         offer_count = Offer.objects.count()
@@ -273,7 +273,7 @@ class OfferListOrderingTests(BaseSetupTestCase):
                 self.assertEqual(len(prices), offer_count, msg="The API did not return all the listings.")
                 self.assertEqual(prices, sorted(prices, reverse=reverse_flag), msg=error_msg)
 
-    def test_ordering_by_updated_at(self):
+    def test_list_offers_ordering_by_updated_at(self):
         """Ensure that ordering offers by updated_at returns the expected order of offers in ascending and descending order."""
         url = reverse("offer-list")
         offer_count = Offer.objects.count()
@@ -308,3 +308,29 @@ class OfferListOrderingTests(BaseSetupTestCase):
 
                 self.assertEqual(len(updated_at), offer_count, msg="The API did not return all the listings.")
                 self.assertEqual(updated_at, sorted(updated_at, reverse=reverse_flag), msg=error_msg)
+
+
+class OfferListPaginationTests(BaseSetupTestCase):
+    """
+    Tests for pagination of the list of offers, ensuring that the API returns the requested page size and provides
+    correct pagination links for next and previous pages.
+    """
+
+    def test_list_offers_pagination_returns_requested_page_size_and_navigation_links(self):
+        """Ensure that the API returns the requested page size and provides correct pagination links for next and previous pages."""
+        url = reverse("offer-list")
+
+        first_page_response = self.client.get(url, {"page_size": 1})
+
+        self.assertEqual(first_page_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(first_page_response.data["results"]), 1)
+        self.assertIsNotNone(first_page_response.data["next"])
+        self.assertIsNone(first_page_response.data["previous"])
+
+        second_page_response = self.client.get(first_page_response.data["next"])
+
+        self.assertEqual(second_page_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(second_page_response.data["results"]), 1)
+        self.assertIsNotNone(second_page_response.data["next"])
+        self.assertIsNotNone(second_page_response.data["previous"])
+        self.assertNotEqual(first_page_response.data["results"][0]["id"], second_page_response.data["results"][0]["id"])
