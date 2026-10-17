@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "django_filters",
     # Local apps
     "offers_app",
+    "orders_app",
     "profiles_app",
     "users_app",
 ]
