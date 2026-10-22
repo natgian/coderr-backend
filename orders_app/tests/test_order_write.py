@@ -18,9 +18,9 @@ class OrderCreateTests(BaseSetupTestCase):
         initial_order_count = Order.objects.count()
         self.authenticate(self.customer_user)
 
-        order_data = {"offer_detail_id": self.detail_graphic_basic.pk}
+        offer_data = {"offer_detail_id": self.detail_graphic_basic.pk}
 
-        response = self.client.post(url, order_data, format="json")
+        response = self.client.post(url, offer_data, format="json")
 
         # response status assertion
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -57,3 +57,53 @@ class OrderCreateTests(BaseSetupTestCase):
         self.assertNotIn("offer_detail", response.data)
         expected_fields_count = 12
         self.assertEqual(len(response.data), expected_fields_count)
+
+    def test_create_order_400_fail_invalid_data(self):
+        """Ensure creating an order fails with an error 400 if the provided data is invalid."""
+
+        url = reverse("order-list")
+        self.authenticate(self.customer_user)
+
+        invalid_cases = [
+            ("invalid data type", {"offer_detail_id": "abc"}),
+            ("missing ID", {}),
+            ("empty String", {"offer_detail_id": ""}),
+        ]
+
+        for case, offer_data in invalid_cases:
+            with self.subTest(case=case):
+                response = self.client.post(url, offer_data, format="json")
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_order_401_fail_not_authenticated(self):
+        """Ensure creating an order fails with an error 401 if the user is not authenticated."""
+
+        url = reverse("order-list")
+
+        offer_data = {"offer_detail_id": self.detail_graphic_basic.pk}
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_create_order_403_fail_not_customer_user(self):
+        """Ensure creating an order fails with an error 403 if the authenticated user is not a customer user."""
+        url = reverse("order-list")
+        self.authenticate(self.business_user2)
+
+        offer_data = {"offer_detail_id": self.detail_graphic_basic.pk}
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_create_order_404_fail_offer_detail_not_found(self):
+        """Ensure creating an order fails with an error 404 if the provided offer_detail_id does not exist."""
+        url = reverse("order-list")
+        self.authenticate(self.customer_user)
+
+        offer_data = {"offer_detail_id": 99999}
+
+        response = self.client.post(url, offer_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

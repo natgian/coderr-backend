@@ -1,6 +1,8 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from orders_app.api.permissions import IsCustomerUserForCreate
 from orders_app.api.serializers import OrderSerializer
 from orders_app.models import Order
 
@@ -10,3 +12,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated, IsCustomerUserForCreate]

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 
 from offers_app.models import OfferDetail
 from orders_app.models import Order
@@ -9,7 +10,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     price = serializers.DecimalField(max_digits=10, decimal_places=2, coerce_to_string=False, read_only=True)
 
-    offer_detail_id = serializers.PrimaryKeyRelatedField(source="offer_detail", queryset=OfferDetail.objects.all(), write_only=True)
+    offer_detail_id = serializers.IntegerField(write_only=True, min_value=1, source="offer_detail")
 
     class Meta:
         model = Order
@@ -42,6 +43,13 @@ class OrderSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def validate_offer_detail_id(self, value):
+        """Validate that the provided offer_detail_id corresponds to an existing OfferDetail instance."""
+        try:
+            return OfferDetail.objects.get(pk=value)
+        except OfferDetail.DoesNotExist:
+            raise NotFound(detail="Offer detail not found.")
 
     def create(self, validated_data):
         """Create an order instance based on the provided offer_detail and the authenticated customer user."""
