@@ -10,10 +10,17 @@ from profiles_app.models import Profile
 
 User = get_user_model()
 
+test_usernames = [
+    "customerUser",
+    "businessUser",
+    "businessUser2",
+    "emptyProfileUser",
+]
+
 print("Cleaning up old test data...")
 Offer.objects.all().delete()
-Profile.objects.all().delete()
-User.objects.filter(username__in=["customerUser", "businessUser", "businessUser2", "emptyProfileUser"]).delete()
+Profile.objects.filter(user__username__in=test_usernames).delete()
+User.objects.filter(username__in=test_usernames).delete()
 
 print("Creating users, tokens and profiles...")
 # Create users
