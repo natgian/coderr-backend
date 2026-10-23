@@ -67,3 +67,33 @@ class OrderSerializer(serializers.ModelSerializer):
             features=offer_detail.features,
             offer_type=offer_detail.offer_type,
         )
+
+
+class OrderUpdateSerializer(OrderSerializer):
+    """
+    Serializer for updating an Order instance, excluding the offer_detail_id field from the update process and allowing the status field to be updated.
+    """
+
+    offer_detail_id = None
+
+    class Meta(OrderSerializer.Meta):
+        fields = []
+        for field in OrderSerializer.Meta.fields:
+            if field != "offer_detail_id":
+                fields.append(field)
+
+        read_only_fields = []
+        for field in fields:
+            if field != "status":
+                read_only_fields.append(field)
+
+    def validate(self, attrs):
+        """
+        Validate that the request only contains the status field for updating an order instance.
+        Raise a ValidationError if any other fields are present in the request data."""
+        request_data = self.initial_data
+
+        for field in request_data.keys():
+            if field != "status":
+                raise serializers.ValidationError("Invalid fields in the request.")
+        return attrs

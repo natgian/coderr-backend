@@ -107,3 +107,84 @@ class OrderCreateTests(BaseSetupTestCase):
         response = self.client.post(url, offer_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class OrderUpdateTests(BaseSetupTestCase):
+    """Tests for updating orders."""
+
+    def setUp(self):
+        """Set up the test case by creating an order instance to be used in the update tests."""
+        super().setUp()
+        offer_detail = self.detail_web_basic
+
+        self.order = Order.objects.create(
+            offer_detail=offer_detail,
+            customer_user=self.customer_user,
+            business_user=offer_detail.offer.user,
+            title=offer_detail.title,
+            revisions=offer_detail.revisions,
+            delivery_time_in_days=offer_detail.delivery_time_in_days,
+            price=offer_detail.price,
+            features=offer_detail.features,
+            offer_type=offer_detail.offer_type,
+        )
+
+    def test_update_order_200_success(self):
+        """Ensure updating an order succeeds with a 200 and updates the order status correctly."""
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+        self.authenticate(self.business_user)
+
+        order_data = {"status": "completed"}
+
+        response = self.client.patch(url, order_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "completed")
+
+    def test_update_order_400_fail_invalid_data(self):
+        """Ensure updating an order fails with an error 400 if the provided data is invalid."""
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+        self.authenticate(self.business_user)
+
+        invalid_cases = [
+            ("status", "abc"),
+            ("status", 123),
+            ("abc", "completed"),
+        ]
+
+        for param, value in invalid_cases:
+            with self.subTest(param=param, value=value):
+                response = self.client.patch(url, {param: value})
+                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_order_401_fail_not_authenticated(self):
+        """Ensure updating an order fails with an error 401 if the user is not authenticated."""
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+        order_data = {"status": "completed"}
+
+        response = self.client.patch(url, order_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_order_403_fail_not_business_user(self):
+        """Ensure updating an order fails with an error 403 if the authenticated user is not a business user."""
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+        self.authenticate(self.customer_user)
+
+        order_data = {"status": "completed"}
+
+        response = self.client.patch(url, order_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_order_404_fail_order_not_found(self):
+        """Ensure updating an order fails with an error 404 if the specified order does not exist."""
+        url = reverse("order-detail", kwargs={"pk": 99999})
+        self.authenticate(self.business_user)
+
+        order_data = {"status": "completed"}
+
+        response = self.client.patch(url, order_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

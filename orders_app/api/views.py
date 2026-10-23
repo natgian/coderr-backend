@@ -2,8 +2,8 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from orders_app.api.permissions import IsCustomerUserForCreate
-from orders_app.api.serializers import OrderSerializer
+from orders_app.api.permissions import OrderPermission
+from orders_app.api.serializers import OrderUpdateSerializer, OrderSerializer
 from orders_app.models import Order
 
 
@@ -12,4 +12,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated, IsCustomerUserForCreate]
+    permission_classes = [IsAuthenticated, OrderPermission]
+
+    def get_serializer_class(self):
+        """
+        Return the appropriate serializer class based on the action being performed.
+        """
+        if self.action == "partial_update":
+            return OrderUpdateSerializer
+        return OrderSerializer
