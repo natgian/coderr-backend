@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from rest_framework import status
@@ -6,6 +7,8 @@ from rest_framework.fields import DateTimeField
 from orders_app.models import Order
 
 from test_utils.base_setup import BaseSetupTestCase
+
+User = get_user_model()
 
 
 class OrderCreateTests(BaseSetupTestCase):
@@ -109,11 +112,10 @@ class OrderCreateTests(BaseSetupTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-class OrderUpdateTests(BaseSetupTestCase):
-    """Tests for updating orders."""
+class BaseOrderTestCase(BaseSetupTestCase):
+    """Base test case for order-related tests."""
 
     def setUp(self):
-        """Set up the test case by creating an order instance to be used in the update tests."""
         super().setUp()
         offer_detail = self.detail_web_basic
 
@@ -128,6 +130,10 @@ class OrderUpdateTests(BaseSetupTestCase):
             features=offer_detail.features,
             offer_type=offer_detail.offer_type,
         )
+
+
+class OrderUpdateTests(BaseOrderTestCase):
+    """Tests for updating orders."""
 
     def test_update_order_200_success(self):
         """Ensure updating an order succeeds with a 200 and updates the order status correctly."""
@@ -186,5 +192,56 @@ class OrderUpdateTests(BaseSetupTestCase):
         order_data = {"status": "completed"}
 
         response = self.client.patch(url, order_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class OrderDeleteTests(BaseOrderTestCase):
+    """Tests for deleting orders."""
+
+    def setUp(self):
+        """"""
+        super().setUp()
+        self.staff_user = User.objects.create_user(username="staffUser", email="staff@email.com", password="staffPassword", type="business", is_staff=True)
+
+    def test_delete_order_204_success(self):
+        """Ensure deleting an order succeeds with a 204 and removes the order from the database."""
+        order_id = self.order.pk
+        initial_order_count = Order.objects.count()
+
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+        self.authenticate(self.staff_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Order.objects.filter(pk=order_id).exists())
+        self.assertEqual(Order.objects.count(), initial_order_count - 1)
+
+    def test_delete_order_401_fail_not_authenticated(self):
+        """Ensure deleting an order fails with an error 401 if the user is not authenticated."""
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(Order.objects.filter(pk=self.order.pk).exists())
+
+    def test_delete_order_403_fail_not_staff_user(self):
+        """Ensure deleting an order fails with an error 403 if the authenticated user is not a staff user."""
+        url = reverse("order-detail", kwargs={"pk": self.order.pk})
+        self.authenticate(self.business_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Order.objects.filter(pk=self.order.pk).exists())
+
+    def test_delete_order_404_fail_order_not_found(self):
+        """Ensure deleting an order fails with an error 404 if the specified order does not exist."""
+        url = reverse("order-detail", kwargs={"pk": 99999})
+        self.authenticate(self.staff_user)
+
+        response = self.client.delete(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
