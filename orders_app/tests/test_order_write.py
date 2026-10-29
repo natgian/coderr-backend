@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.fields import DateTimeField
 
 from orders_app.models import Order
+from orders_app.tests.base_order import BaseOrderTestCase
 
 from test_utils.base_setup import BaseSetupTestCase
 
@@ -110,26 +111,6 @@ class OrderCreateTests(BaseSetupTestCase):
         response = self.client.post(url, offer_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-
-class BaseOrderTestCase(BaseSetupTestCase):
-    """Base test case for order-related tests."""
-
-    def setUp(self):
-        super().setUp()
-        offer_detail = self.detail_web_basic
-
-        self.order = Order.objects.create(
-            offer_detail=offer_detail,
-            customer_user=self.customer_user,
-            business_user=offer_detail.offer.user,
-            title=offer_detail.title,
-            revisions=offer_detail.revisions,
-            delivery_time_in_days=offer_detail.delivery_time_in_days,
-            price=offer_detail.price,
-            features=offer_detail.features,
-            offer_type=offer_detail.offer_type,
-        )
 
 
 class OrderUpdateTests(BaseOrderTestCase):

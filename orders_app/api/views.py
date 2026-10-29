@@ -1,6 +1,5 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 
 from orders_app.api.permissions import OrderPermission
 from orders_app.api.serializers import OrderUpdateSerializer, OrderSerializer
@@ -21,3 +20,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "partial_update":
             return OrderUpdateSerializer
         return OrderSerializer
+
+    def get_queryset(self):
+        """Return the queryset of orders based on the authenticated user's type and permissions."""
+        queryset = super().get_queryset()
+        user = self.request.user
+
+        if user.is_staff:
+            return queryset
+
+        if user.type == "customer":
+            return queryset.filter(customer_user=user)
+
+        if user.type == "business":
+            return queryset.filter(business_user=user)
+
+        return queryset.none()
