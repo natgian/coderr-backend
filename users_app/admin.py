@@ -6,6 +6,7 @@ from users_app.models import CustomUser
 
 class CustomerUserAdmin(UserAdmin):
     list_display = (
+        "id",
         "username",
         "email",
         "is_active",
