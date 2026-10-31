@@ -1,9 +1,16 @@
+from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
+
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from orders_app.api.permissions import OrderPermission
 from orders_app.api.serializers import OrderUpdateSerializer, OrderSerializer
 from orders_app.models import Order
+
+User = get_user_model()
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -36,3 +43,16 @@ class OrderViewSet(viewsets.ModelViewSet):
             return queryset.filter(business_user=user)
 
         return queryset.none()
+
+
+class OrderCountView(APIView):
+    """A view for retrieving the count of in-progress orders for a specific business user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        get_object_or_404(User, pk=business_user_id, type="business")
+
+        order_count = Order.objects.filter(business_user_id=business_user_id, status="in_progress").count()
+
+        return Response({"order_count": order_count})
