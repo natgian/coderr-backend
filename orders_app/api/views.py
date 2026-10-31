@@ -46,13 +46,17 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 
 class OrderCountView(APIView):
-    """A view for retrieving the count of in-progress orders for a specific business user."""
+    """A view to count orders for a specific business user based on their status ("in_progress" or "completed")."""
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, business_user_id):
+    def get(self, request, business_user_id, order_status):
+        """Handle GET requests to count orders for a specific business user based on their status ("in_progress" or "completed".)"""
         get_object_or_404(User, pk=business_user_id, type="business")
 
-        order_count = Order.objects.filter(business_user_id=business_user_id, status="in_progress").count()
+        count = Order.objects.filter(business_user_id=business_user_id, status=order_status).count()
 
-        return Response({"order_count": order_count})
+        if order_status == "completed":
+            return Response({"completed_order_count": count})
+
+        return Response({"order_count": count})

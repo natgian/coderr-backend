@@ -79,7 +79,7 @@ class OrderCountTests(BaseOrderTestCase):
         self.second_oder_in_progress = self.create_order(self.detail_graphic_premium, self.customer_user)
         self.third_order_completed = self.create_order(self.detail_web_standard, self.customer_user, "completed")
 
-    def test_get_business_user_order_count_in_progress_200_success(self):
+    def test_get_business_user_in_progress_order_count_200_success(self):
         """Ensure getting the order count for a business user returns the correct count of in-progress orders with a 200 status code."""
         self.authenticate(self.customer_user)
 
@@ -94,15 +94,9 @@ class OrderCountTests(BaseOrderTestCase):
             response = self.client.get(url)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(response.data["order_count"], expected_count)
-            print(
-                "Total count:",
-                Order.objects.filter(
-                    business_user_id=business_user_id,
-                ).count(),
-            )
+            self.assertEqual(response.data, {"order_count": expected_count})
 
-    def test_get_business_user_order_count_401_fail_not_authenticated(self):
+    def test_get_business_user_in_progress_order_count_401_fail_not_authenticated(self):
         """Ensure getting the order count for a business user fails with an error 401 if the user is not authenticated."""
         url = reverse("order-count", kwargs={"business_user_id": self.business_user.pk})
 
@@ -110,7 +104,7 @@ class OrderCountTests(BaseOrderTestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_get_business_user_order_count_404_fail_not_found(self):
+    def test_get_business_user_in_progress_order_count_404_fail_not_found(self):
         """Ensure getting the order count for a business user fails with an error 404 if the user does not exist."""
         url = reverse("order-count", kwargs={"business_user_id": 99999})
         self.authenticate(self.customer_user)
@@ -118,3 +112,20 @@ class OrderCountTests(BaseOrderTestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_get_business_user_completed_order_count_200_success(self):
+        """Ensure getting the completed order count for a business user returns the correct count of completed orders with a 200 status code."""
+        self.authenticate(self.customer_user)
+
+        cases = [
+            (self.business_user.pk, 1),
+            (self.business_user2.pk, 0),
+        ]
+
+        for business_user_id, expected_count in cases:
+            url = reverse("completed-order-count", kwargs={"business_user_id": business_user_id})
+
+            response = self.client.get(url)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data, {"completed_order_count": expected_count})
