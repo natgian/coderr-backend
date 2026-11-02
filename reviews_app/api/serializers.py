@@ -1,0 +1,29 @@
+from rest_framework import serializers
+
+from reviews_app.models import Review
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Serializer for the Review model."""
+
+    class Meta:
+        model = Review
+        fields = ["id", "business_user", "reviewer", "rating", "description", "created_at", "updated_at"]
+        read_only_fields = ["id", "reviewer", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        """Validate that a reviewer can only leave one review per business user."""
+        reviewer = self.context["request"].user
+        business_user = attrs.get("business_user") or (self.instance and self.instance.business_user)
+
+        queryset = Review.objects.filter(reviewer=reviewer, business_user=business_user)
+
+        if self.instance:
+            queryset = queryset.exclude(id=self.instance.id)
+
+        if queryset.exists():
+            raise serializers.ValidationError({"business_user": "You already left a review for this provider."})
+
+        attrs["reviewer"] = reviewer
+
+        return attrs
