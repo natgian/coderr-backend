@@ -22,7 +22,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             queryset = queryset.exclude(id=self.instance.id)
 
         if queryset.exists():
-            raise serializers.ValidationError({"business_user": "You already left a review for this provider."})
+            raise serializers.ValidationError({"business_user": "You already left a review for this service provider."})
 
         attrs["reviewer"] = reviewer
 
@@ -31,5 +31,5 @@ class ReviewSerializer(serializers.ModelSerializer):
     def validate_business_user(self, value):
         """Validate that the business_user is of type "business"."""
         if value.type != "business":
-            raise serializers.ValidationError("The user must business user.")
+            raise serializers.ValidationError("The user must be a business user.")
         return value
