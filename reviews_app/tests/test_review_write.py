@@ -13,7 +13,7 @@ class ReviewCreateTests(BaseSetupTestCase):
 
     def setUp(self):
         super().setUp()
-        review = Review.objects.create(
+        self.review = Review.objects.create(
             business_user=self.business_user,
             reviewer=self.customer_user,
             rating=5,
@@ -76,6 +76,7 @@ class ReviewCreateTests(BaseSetupTestCase):
         """Ensure creating a review fails with an error 400 if the provided data is invalid."""
 
         url = reverse("review-list")
+        initial_count = Review.objects.count()
         self.authenticate(self.empty_pf_user)
 
         valid_data = {
@@ -102,10 +103,12 @@ class ReviewCreateTests(BaseSetupTestCase):
                 response = self.client.post(url, review_data, format="json")
 
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(Review.objects.count(), initial_count)
 
     def test_create_review_400_fail_missing_field(self):
         """Ensure creating a review fails with an error 400 if any required field is missing."""
         url = reverse("review-list")
+        initial_count = Review.objects.count()
         self.authenticate(self.empty_pf_user)
 
         valid_data = {
@@ -122,6 +125,20 @@ class ReviewCreateTests(BaseSetupTestCase):
                 response = self.client.post(url, review_data, format="json")
 
                 self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(Review.objects.count(), initial_count)
+
+    def test_create_review_400_fail_business_user_not_type_business(self):
+        """Ensure creating a review fails with an error 400 if the business_user is not of type "business"."""
+        url = reverse("review-list")
+        initial_count = Review.objects.count()
+        self.authenticate(self.empty_pf_user)
+
+        review_data = {"business_user": self.customer_user.pk, "rating": 4, "description": "Alles war toll!"}
+
+        response = self.client.post(url, review_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Review.objects.count(), initial_count)
 
     def test_create_review_401_fail_not_authenticated(self):
         """Ensure creating a review fails with an error 401 if the user is not authenticated."""

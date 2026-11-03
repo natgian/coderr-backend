@@ -27,3 +27,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         attrs["reviewer"] = reviewer
 
         return attrs
+
+    def validate_business_user(self, value):
+        """Validate that the business_user is of type "business"."""
+        if value.type != "business":
+            raise serializers.ValidationError("The user must business user.")
+        return value
