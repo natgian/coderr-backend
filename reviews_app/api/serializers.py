@@ -29,7 +29,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         return attrs
 
     def validate_business_user(self, value):
-        """Validate that the business_user is of type "business"."""
+        """Validate that the business user is of type "business" and cannot be changed once set."""
+        if self.instance and value.pk != self.instance.business_user_id:
+            raise serializers.ValidationError("The business user can't be changed.")
+
         if value.type != "business":
             raise serializers.ValidationError("The user must be a business user.")
         return value
