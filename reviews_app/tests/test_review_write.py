@@ -302,3 +302,47 @@ class ReviewUpdateTests(BaseReviewTestCase):
         response = self.client.patch(url, updated_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ReviewDeleteTests(BaseReviewTestCase):
+    """Tests für deleting a review."""
+
+    def test_delete_review_204_success(self):
+        """Ensure deleting a review succeeds with a 204 and the review is removed from the database."""
+        url = reverse("review-detail", kwargs={"pk": self.review.pk})
+        initial_count = Review.objects.count()
+        self.authenticate(self.customer_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Review.objects.count(), initial_count - 1)
+        self.assertFalse(Review.objects.filter(pk=self.review.pk).exists())
+
+    def test_delete_review_401_fail_not_authenticated(self):
+        """Ensure deleting a review fails with an error 401 if the user is not authenticated."""
+        url = reverse("review-detail", kwargs={"pk": self.review.pk})
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertTrue(Review.objects.filter(pk=self.review.pk).exists())
+
+    def test_delete_review_403_fail_not_authorized(self):
+        """Ensure deleting a review fails with an error 403 if the authenticated user is not the creator of the review."""
+        url = reverse("review-detail", kwargs={"pk": self.review.pk})
+        self.authenticate(self.empty_pf_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Review.objects.filter(pk=self.review.pk).exists())
+
+    def test_delete_review_404_fail_review_not_found(self):
+        """Ensure deleting a review fails with an error 404 if the review does not exist."""
+        url = reverse("review-detail", kwargs={"pk": 9999})
+        self.authenticate(self.customer_user)
+
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
