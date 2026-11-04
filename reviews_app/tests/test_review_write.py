@@ -1,5 +1,3 @@
-from traceback import format_tb
-
 from django.urls import reverse
 
 from rest_framework import status
@@ -7,8 +5,6 @@ from rest_framework.fields import DateTimeField
 
 from reviews_app.models import Review
 from reviews_app.tests.base_review import BaseReviewTestCase
-
-from test_utils.base_setup import BaseSetupTestCase
 
 
 class ReviewCreateTests(BaseReviewTestCase):
