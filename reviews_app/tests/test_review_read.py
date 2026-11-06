@@ -1,18 +1,26 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from rest_framework import status
-from rest_framework.fields import DateTimeField
 
 from reviews_app.models import Review
 from reviews_app.tests.base_review import BaseReviewTestCase
 
+User = get_user_model()
 
-class ReviewListTests(BaseReviewTestCase):
-    """Tests for listing reviews."""
 
+class BaseReviewListTestCase(BaseReviewTestCase):
     def setUp(self):
         """Set up the test environment by creating multiple reviews for testing the list functionality."""
         super().setUp()
+
+        self.test_reviewer = User.objects.create_user(
+            username="testReviewer",
+            email="testReviewer@mail.com",
+            password="testReviewer",
+            type="customer",
+        )
+
         self.second_review = self.create_review(
             business_user=self.business_user2,
             reviewer=self.customer_user,
@@ -31,6 +39,16 @@ class ReviewListTests(BaseReviewTestCase):
             rating=1,
             description="Leider nicht zufrieden.",
         )
+        self.fifth_review = self.create_review(
+            business_user=self.business_user,
+            reviewer=self.test_reviewer,
+            rating=3,
+            description="Gute Arbeit, mit etwas Luft nach oben.",
+        )
+
+
+class ReviewListTests(BaseReviewListTestCase):
+    """Tests for listing reviews."""
 
     def test_list_reviews_200_success(self):
         """Ensure retrieving a list of reviews is successful and returns the expected fields."""
@@ -40,6 +58,7 @@ class ReviewListTests(BaseReviewTestCase):
 
         response = self.client.get(url)
 
+        # response assertions
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         expected_fields = {
@@ -57,7 +76,9 @@ class ReviewListTests(BaseReviewTestCase):
                 self.assertIn(field, review_data)
             self.assertEqual(len(review_data), len(expected_fields))
 
-        print(response.data)
+        # count assertion
+        expected_count = Review.objects.count()
+        self.assertEqual(len(response.data), expected_count)
 
     def test_list_reviews_401_fail_not_authenticated(self):
         """Ensure retrieving a list of reviews fails with an error 401 when the user is not authenticated."""
@@ -66,3 +87,77 @@ class ReviewListTests(BaseReviewTestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ReviewListFilterTests(BaseReviewListTestCase):
+    """Tests for filtering the list of reviews based on business_user ID or reviewer ID."""
+
+    def test_filter_reviews_by_business_user_id(self):
+        """Ensure filtering reviews by business_user ID returns the expected reviews."""
+        url = reverse("review-list")
+        self.authenticate(self.customer_user)
+
+        expected_reviews = Review.objects.filter(business_user=self.business_user.pk)
+
+        response = self.client.get(url, {"business_user_id": self.business_user.pk})
+
+        # response assertion
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # filter assertions
+        result_ids = []
+        for review in response.data:
+            result_ids.append(review["id"])
+
+        expected_ids = []
+        for review in expected_reviews:
+            expected_ids.append(review.id)
+
+        self.assertCountEqual(result_ids, expected_ids)
+
+    def test_filter_reviews_by_reviewer_id(self):
+        """Ensure filtering reviews by reviewer ID returns the expected reviews."""
+
+        url = reverse("review-list")
+        self.authenticate(self.customer_user)
+
+        expected_reviews = Review.objects.filter(reviewer=self.test_reviewer.pk)
+
+        response = self.client.get(url, {"reviewer_id": self.test_reviewer.pk})
+
+        # response assertion
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # filter assertions
+        result_ids = []
+        for review in response.data:
+            result_ids.append(review["id"])
+
+        expected_ids = []
+        for review in expected_reviews:
+            expected_ids.append(review.id)
+
+        self.assertCountEqual(result_ids, expected_ids)
+
+    def test_filter_reviews_by_business_user_and_reviewer_ids(self):
+        """Ensure filtering reviews by business_user and reviewer IDs returns the expected reviews."""
+        url = reverse("review-list")
+        self.authenticate(self.customer_user)
+
+        expected_reviews = Review.objects.filter(reviewer=self.customer_user.pk, business_user=self.business_user)
+
+        response = self.client.get(url, {"reviewer_id": self.customer_user.pk, "business_user_id": self.business_user.pk})
+
+        # response assertion
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # filter assertions
+        result_ids = []
+        for review in response.data:
+            result_ids.append(review["id"])
+
+        expected_ids = []
+        for review in expected_reviews:
+            expected_ids.append(review.id)
+
+        self.assertCountEqual(result_ids, expected_ids)
