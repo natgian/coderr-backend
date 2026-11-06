@@ -247,8 +247,7 @@ class OfferListFilterTests(BaseSetupTestCase):
 
 class OfferListOrderingTests(BaseSetupTestCase):
     """
-    Tests for ordering the list of offers based on minimum price and updated_at timestamp,
-    ensuring that the offers are returned in the expected order for both ascending and descending cases.
+    Tests for ordering the list of offers based on minimum price and updated_at timestamp, ensuring that the offers are returned in the expected order for both ascending and descending cases.
     """
 
     def test_list_offers_ordering_by_min_price(self):
