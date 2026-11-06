@@ -1,5 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from reviews_app.api.filters import ReviewFilter
@@ -14,6 +14,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = ["updated_at", "rating"]
+    ordering = ["-updated_at"]
     filterset_class = ReviewFilter
 
     def get_permissions(self):
