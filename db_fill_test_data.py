@@ -7,6 +7,7 @@ from rest_framework.authtoken.models import Token
 
 from offers_app.models import Offer, OfferDetail
 from profiles_app.models import Profile
+from reviews_app.models import Review
 
 User = get_user_model()
 
@@ -18,8 +19,6 @@ test_usernames = [
 ]
 
 print("Cleaning up old test data...")
-Offer.objects.all().delete()
-Profile.objects.filter(user__username__in=test_usernames).delete()
 User.objects.filter(username__in=test_usernames).delete()
 
 print("Creating users, tokens and profiles...")
@@ -151,8 +150,40 @@ OfferDetail.objects.create(
     offer_type="premium",
 )
 
-# Update offers "updated_at" values
+print("Creating reviews...")
+
+# Create reviews
+review1 = Review.objects.create(
+    business_user=business_user,
+    reviewer=customer_user,
+    rating=4,
+    description="Bester Service!",
+)
+
+review2 = Review.objects.create(
+    business_user=business_user2,
+    reviewer=customer_user,
+    rating=5,
+    description="Sehr zufrieden mit dem Ergebnis.",
+)
+
+review3 = Review.objects.create(
+    business_user=business_user,
+    reviewer=empty_user,
+    rating=2,
+    description="Das Ergebnis war ausbaufähig.",
+)
+
+review4 = Review.objects.create(
+    business_user=business_user2,
+    reviewer=empty_user,
+    rating=1,
+    description="Leider nicht zufrieden.",
+)
+
+# Set timestamps for sorting tests
 now = timezone.now()
+
 Offer.objects.filter(pk=offer_web.pk).update(
     created_at=now - timedelta(days=10),
     updated_at=now - timedelta(days=8),
@@ -165,5 +196,17 @@ Offer.objects.filter(pk=offer_social.pk).update(
     created_at=now - timedelta(days=2),
     updated_at=now,
 )
+
+Review.objects.filter(pk=review1.pk).update(
+    updated_at=now - timedelta(days=3),
+)
+Review.objects.filter(pk=review2.pk).update(
+    updated_at=now - timedelta(days=2),
+)
+Review.objects.filter(pk=review3.pk).update(
+    updated_at=now - timedelta(days=1),
+)
+Review.objects.filter(pk=review4.pk).update(updated_at=now)
+
 
 print("Database successfully populated with all test data.")
