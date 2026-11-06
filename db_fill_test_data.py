@@ -198,15 +198,20 @@ Offer.objects.filter(pk=offer_social.pk).update(
 )
 
 Review.objects.filter(pk=review1.pk).update(
+    created_at=now - timedelta(days=5),
     updated_at=now - timedelta(days=3),
 )
 Review.objects.filter(pk=review2.pk).update(
+    created_at=now - timedelta(days=4),
     updated_at=now - timedelta(days=2),
 )
 Review.objects.filter(pk=review3.pk).update(
+    created_at=now - timedelta(days=3),
     updated_at=now - timedelta(days=1),
 )
-Review.objects.filter(pk=review4.pk).update(updated_at=now)
-
+Review.objects.filter(pk=review4.pk).update(
+    created_at=now - timedelta(days=2),
+    updated_at=now,
+)
 
 print("Database successfully populated with all test data.")
