@@ -16,6 +16,8 @@ class ProfileViewSet(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewset
     queryset = Profile.objects.all()
     serializer_class = ProfileDetailSerializer
     permission_classes = [IsAuthenticated, IsProfileOwnerOrReadOnly]
+    lookup_field = "user_id"
+    lookup_url_kwarg = "user_id"
 
     def get_serializer_class(self):
         """Return the appropriate serializer class based on the action being performed."""
