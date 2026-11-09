@@ -24,7 +24,7 @@ class Order(models.Model):
     customer_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="placed_orders")
     business_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="received_orders")
     title = models.CharField(max_length=255)
-    revisions = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(50)])
+    revisions = models.SmallIntegerField(default=0, validators=[MinValueValidator(-1), MaxValueValidator(50)])
     delivery_time_in_days = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))])
     features = models.JSONField()
