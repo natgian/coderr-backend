@@ -32,7 +32,7 @@ class OfferDetail(models.Model):
 
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="details")
     title = models.CharField(max_length=255)
-    revisions = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(50)])
+    revisions = models.SmallIntegerField(default=0, validators=[MinValueValidator(-1), MaxValueValidator(50)])
     delivery_time_in_days = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))])
     features = models.JSONField()
