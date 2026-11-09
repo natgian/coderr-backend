@@ -67,7 +67,7 @@ class ProfileDetailTests(BaseSetupTestCase):
 
     def test_profile_detail_404_fail_not_found(self):
         """Ensure retrieving a profile fails with an error 404 if the profile does not exist."""
-        url = reverse("profile-detail", kwargs={"pk": 99999})
+        url = reverse("profile-detail", kwargs={"user_id": 99999})
         self.authenticate(self.customer_user)
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -110,7 +110,7 @@ class ProfileDetailTests(BaseSetupTestCase):
 
     def test_profile_update_404_fail_not_found(self):
         """Ensure that updating a profile fails with an error 404 if the profile is not found."""
-        url = reverse("profile-detail", kwargs={"pk": 99999})
+        url = reverse("profile-detail", kwargs={"user_id": 99999})
         self.authenticate(self.customer_user)
         updated_data = {"location": "Luzern", "description": "Updated description."}
 
