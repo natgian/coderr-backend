@@ -7,14 +7,20 @@ class OrderPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         """
         Determine if the user has permission to perform the requested action.
-
-        - Only customers can create orders
-        - Only business users can update orders
-        - Only staff users can delete orders
+        Only customers can create orders.
         """
         if view.action == "create":
             return request.user.type == "customer"
 
+        return True
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Determine if the user has permission to perform actions on a specific order instance.
+
+        - Only business users can update orders
+        - Only staff user can delete orders
+        """
         if view.action in ["update", "partial_update"]:
             return request.user.type == "business"
 
