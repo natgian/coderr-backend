@@ -36,7 +36,7 @@ class OfferDetail(models.Model):
     delivery_time_in_days = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal("0.00"))])
     features = models.JSONField()
-    offer_type = models.CharField(max_length=20, choices=OFFER_TYPE_CHOICES, default="standard")
+    offer_type = models.CharField(max_length=20, choices=OFFER_TYPE_CHOICES)
 
     def __str__(self):
         return f"{self.title} ({self.get_offer_type_display()})"

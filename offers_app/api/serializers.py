@@ -53,9 +53,21 @@ class OfferWriteSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "image", "description", "details"]
 
     def validate_details(self, value):
-        """Validate that exactly three OfferDetail instances are provided in the 'details' field."""
-        if self.instance is None and len(value) != 3:
-            raise serializers.ValidationError("Exactly 3 details are required.")
+        """Validate that each detail includes an offer_type and that creation uses exactly one of each type."""
+
+        for detail in value:
+            if "offer_type" not in detail:
+                raise serializers.ValidationError("Every detail requires an 'offer_type'-field.")
+
+        if self.instance is None:
+            expected_types = {"basic", "standard", "premium"}
+            actual_types = set()
+            for detail in value:
+                actual_types.add(detail["offer_type"])
+
+            if len(value) != 3 or actual_types != expected_types:
+                raise serializers.ValidationError("Provide exactly one detail for each offer type: basic, standard and premium.")
+
         return value
 
     def create(self, validate_data):
