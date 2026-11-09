@@ -17,6 +17,7 @@ env/
 # Secrets
 .env
 .env.*
+!.env.template
 
 # Django
 db.sqlite3
