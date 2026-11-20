@@ -99,6 +99,51 @@ python manage.py runserver
 
 The API is available at `http://127.0.0.1:8000/api/` by default.
 
+## Running with Docker
+
+These instructions run the Django development server in a Docker container.
+
+### 1. Configure environment variables
+
+Create a `.env` file in the project root:
+
+```env
+SECRET_KEY=<YOUR-DJANGO-SECRET-KEY>
+DEBUG=true
+```
+
+The `.env` file is passed to the container at runtime and is not included in the Docker image.
+
+### 2. Build the image
+
+```bash
+docker build -t coderr-backend .
+```
+
+### 3. Start the container
+
+```bash
+docker run --name coderr-backend --env-file .env -p 8000:8000 -d coderr-backend
+```
+
+### 4. Apply database migrations
+
+```bash
+docker exec coderr-backend python manage.py migrate
+```
+
+The API is available at http://127.0.0.1:8000/api/.
+
+To stop the container run:
+
+```bash
+docker stop coderr-backend
+```
+
+The database and uploaded files are stored inside the container. They remain available when stopping and restarting the same container, but are lost if the container is removed. Configure persistent storage before relying on the container to retain data.
+
+The Docker setup uses Django's development server and is intended for local development, not production deployment.
+
 ## API Endpoints
 
 | Feature            | Endpoint                                         | Method            | Description                                                                 |

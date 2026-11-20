@@ -1,0 +1,24 @@
+# Exclude version control history
+.git
+.gitignore
+
+# Exclude virtual environments and Python cache
+.venv
+venv
+__pycache__
+*.pyc
+
+# Exclude local secrets and environment configs
+.env
+.env.*
+
+# Exclude Docker configuration files from the image context
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Exclude local databases and IDE settings
+*.sqlite3
+.vscode
+.idea
+.DS_Store
