@@ -42,7 +42,7 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = {"true": True, "false": False}.get(os.getenv("DEBUG", "false").strip().lower(), False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "127.0.0.1, localhost").split(",") if host.strip()]
 
 
 # Application definition

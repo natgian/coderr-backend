@@ -68,14 +68,21 @@ pip install -r requirements.txt
 
 ### 4. Configure environment variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root based on `.env.template`:
 
-```env
-SECRET_KEY=<YOUR-DJANGO-SECRET-KEY>
-DEBUG=true
+**macOS / Linux**
+
+```bash
+cp .env.template .env
 ```
 
-`SECRET_KEY` is required. Keep it private, and disable `DEBUG` in production.
+**Windows**
+
+```powershell
+Copy-Item .env.template .env
+```
+
+Set a private `SECRET_KEY` and disable `DEBUG` in production. Set `ALLOWED_HOSTS` to the hostnames or IP addresses that may access the application, separated by commas. Do not include a protocol or port; for example: `ALLOWED_HOSTS=127.0.0.1,localhost,my-domain.example`.
 
 ### 5. Apply database migrations
 
@@ -105,12 +112,21 @@ These instructions run the Django development server in a Docker container.
 
 ### 1. Configure environment variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root based on `.env.template`:
 
-```env
-SECRET_KEY=<YOUR-DJANGO-SECRET-KEY>
-DEBUG=true
+**macOS / Linux**
+
+```bash
+cp .env.template .env
 ```
+
+**Windows**
+
+```powershell
+Copy-Item .env.template .env
+```
+
+Set a private `SECRET_KEY`, disable `DEBUG` in production, and replace `YOUR_SERVER_IP` in `ALLOWED_HOSTS` with the IP address or hostname that will access the server.
 
 The `.env` file is passed to the container at runtime and is not included in the Docker image.
 
